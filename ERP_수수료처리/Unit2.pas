@@ -20,7 +20,7 @@ type
       Shift: TShiftState);
     procedure f2btnExcelClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
-
+//https://github.com/hanakeun/0403test.git///https://github.com/hanakeun/0403test.git//https://github.com/hanakeun/0403test.git
 
   private
     { Private declarations }
