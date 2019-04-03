@@ -25,7 +25,13 @@ uses
 //주석처리
 
 //dfdfefe
-//eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+//eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee          zxvczxcv
+
+
+
+
+
+
 type
   TForm1 = class(TForm)
     ToolBar1: TToolBar;
