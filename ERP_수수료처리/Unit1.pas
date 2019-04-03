@@ -15,22 +15,12 @@ uses
   cxGridCustomTableView, cxGridTableView, cxGridDBTableView, cxGridCustomView,
   cxGrid, cxClasses;
 {$I coop_data.inc}
-//주석처리
-//주석처리
-//주석처리
-//주석처리
-//주석처리
-//주석처리
-//주석처리
-//주석처리
-
-//dfdfefe
-//eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee          zxvczxcv
-
-
-
-
-
+//ㅁㅇ나ㅜ리마ㅜㄴㄷㅈ리ㅏㅜㅁㄷㅈ리ㅏㅜㅁㄷㅈ리ㅏㅜ
+//이ㅏ류ㅜㅁㅈ두리마ㅜㅇㄴ피ㅜㅇ니ㅏㅜㄿ
+//이ㅏ류ㅜㅁㅈ두리마ㅜㅇㄴ피ㅜㅇ니ㅏㅜㄿ
+//이ㅏ류ㅜㅁㅈ두리마ㅜㅇㄴ피ㅜㅇ니ㅏㅜㄿ
+//이ㅏ류ㅜㅁㅈ두리마ㅜㅇㄴ피ㅜㅇ니ㅏㅜㄿ
+//이ㅏ류ㅜㅁㅈ두리마ㅜㅇㄴ피ㅜㅇ니ㅏㅜㄿ
 
 type
   TForm1 = class(TForm)
