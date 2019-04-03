@@ -1,0 +1,5 @@
+Bank : 은행
+Emp : 사원
+Post : 부서
+TaxOffice : 세무서
+Zip : 우편번호

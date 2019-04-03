@@ -1,0 +1,2260 @@
+unit Unit1;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, ComCtrls, ToolWin, Grids, DBGrids, Menus, StdCtrls, Buttons,
+  UREdits, URCombos, URDataCombo, ZConnection, DB, ZAbstractRODataset,
+  ZAbstractDataset, ZDataset, RxMemDS, MemDS, VirtualTable, Excels,
+  ExtCtrls, ComObj;
+{$I coop_data.inc}
+type
+  TForm1 = class(TForm)
+    ToolBar1: TToolBar;
+    StatusBar1: TStatusBar;
+    DBGrid1: TDBGrid;
+    btnSearch: TToolButton;
+    btnExcel: TToolButton;
+    btnClose: TToolButton;
+    ToolButton4: TToolButton;
+    ToolButton5: TToolButton;
+    btnSave: TBitBtn;
+    PopupMenu1: TPopupMenu;
+    Label1: TLabel;
+    Label2: TLabel;
+    edtorg: TwDataCombo;
+    edtjname: TwDataCombo;
+    BitBtn2: TBitBtn;
+    BitBtn3: TBitBtn;
+    Label3: TLabel;
+    edtFs_day: TDateTimePicker;
+    tblCms: TRxMemoryData;
+    dtstblCms: TDataSource;
+    tblorg: TVirtualTable;
+    dtstblorg: TDataSource;
+    tbljohap: TVirtualTable;
+    dtstbljohap: TDataSource;
+    Label5: TLabel;
+    tblCmssno: TIntegerField;
+    tblCmsm_code: TStringField;
+    tblCmsnum: TIntegerField;
+    tblCmss_money: TFloatField;
+    tblCmsj_code: TStringField;
+    tblCmsc_code: TStringField;
+    tblCmskind: TStringField;
+    tblCmsbank: TStringField;
+    tblCmsj_name: TStringField;
+    tblCmsm_name: TStringField;
+    tblCmsc_name: TStringField;
+    qrycenter: TVirtualTable;
+    qrymembers: TVirtualTable;
+    qryCode: TVirtualTable;
+    tblCmsbank_name: TStringField;
+    tblCmskind_name: TStringField;
+    tblCmsr_ab: TStringField;
+    tblCmsj_code1: TStringField;
+    qryjohap: TVirtualTable;
+    tblCmsj_name1: TStringField;
+    qrymembership: TVirtualTable;
+    tblCmsr_ab_name: TStringField;
+    pb1: TProgressBar;
+    tblCmsc_code1: TStringField;
+    tblCmsc_name1: TStringField;
+    Excel1: TExcel;
+    N1: TMenuItem;
+    tblCmso_code: TStringField;
+    rg1: TRadioGroup;
+    Label4: TLabel;
+    tblorders: TRxMemoryData;
+    dtstblorders: TDataSource;
+    tblordersm_code: TStringField;
+    tblordersg_code: TStringField;
+    tblorderss_day: TDateField;
+    tblordersa_day: TDateField;
+    tblordersc_code: TStringField;
+    tblorderscost: TFloatField;
+    tblordersm_name: TStringField;
+    tblordersc_code1: TStringField;
+    tblordersc_name1: TStringField;
+    tblordersj_code1: TStringField;
+    tblordersj_name1: TStringField;
+    tblorderso_code: TStringField;
+    Label6: TLabel;
+    Label7: TLabel;
+    chk1: TCheckBox;
+    BitBtn1: TBitBtn;
+    ToolButton1: TToolButton;
+    dtstblmembership: TDataSource;
+    qrymembershipm_code: TStringField;
+    qrymembershipmaejang_code: TStringField;
+    qrymembershipm_name: TStringField;
+    qrymembershipj_name: TStringField;
+    tblmembership: TVirtualTable;
+    tblCmsr_money: TFloatField;
+    Memo1: TMemo;
+    db_coopbase: TZConnection;
+    qryEtc: TZQuery;
+    qrySql: TZQuery;
+    qry_imsi: TVirtualTable;
+    qry_etc: TVirtualTable;
+    procedure FormCreate(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure btnSearchClick(Sender: TObject);
+    procedure btnSaveClick(Sender: TObject);
+    procedure btnExcelClick(Sender: TObject);
+    procedure btnCloseClick(Sender: TObject);
+    procedure BitBtn2Click(Sender: TObject);
+    procedure BitBtn3Click(Sender: TObject);
+    procedure edtorgKeyPress(Sender: TObject; var Key: Char);
+    procedure FormShow(Sender: TObject);
+    procedure edtjnameClick(Sender: TObject);
+    procedure tblCmsCalcFields(DataSet: TDataSet);
+    procedure edtFs_dayChange(Sender: TObject);
+
+    procedure SaveAcc(cd_chk, d_code, e_code, Ashj_code, Ashcomm: string; Ashamount, AshDamt, AshEamt: real; AshCDate, AshCash_ab, AshAc_num: string);
+    procedure N1Click(Sender: TObject);
+    procedure rg1Click(Sender: TObject);
+    procedure tblordersCalcFields(DataSet: TDataSet);
+    procedure chk1Click(Sender: TObject);
+    procedure BitBtn1Click(Sender: TObject);
+
+  private
+    { Private declarations }
+  public
+    CoopData: PCoopDllData;
+    ThisHandleNum: Integer;
+
+    procedure MouseWheelHandler(var Message: TMessage); override;
+    { Public declarations }
+  end;
+
+var
+  Form1: TForm1;
+  mpst_code, mpst_name, j_code, c_code, org_code, PromptStr: string;
+  svrconn: Integer;
+  NoCalBool, NoScrollBool: Boolean;
+
+  cms21_unified_day, cms21_unified_day_update, cms21_created_day: TDate;
+  orders_unified_day, orders_unified_day_update, orders_created_day: TDate;
+
+  Dacntd, Dacnte, Cacntd, Cacnte, acntd: string;
+  Comment, Ac_num, Asho_code, Ashj_code, AshSnum, AshTDate, AshCDate: string;
+
+  Ashm_codeList: string;
+
+procedure GetCoopData(var pCoopData: PCoopDllData); stdcall; External 'coop_dll.dll';
+
+implementation
+
+uses coop_utils, Unit2, coop_sql_updel;
+
+{$R *.dfm}
+
+procedure TForm1.MouseWheelHandler(var Message: TMessage);
+begin
+  if Message.msg = WM_MOUSEWHEEL then
+  begin
+    if ((ActiveControl is TDBgrid) or
+      (ActiveControl is TwDataCombo)) then
+    begin
+      if Message.wParam > 0 then
+      begin
+        keybd_event(VK_UP, VK_UP, 0, 0);
+      end
+      else if Message.wParam < 0 then
+      begin
+        keybd_event(VK_DOWN, VK_DOWN, 0, 0);
+      end;
+    end;
+  end;
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+var
+  AshsQL, AshStr: string;
+  Ashchk: string;
+  Ashint: integer;
+begin
+  GetCoopData(CoopData);
+  ThisHandleNum := CoopData^.menuclick;
+
+  if CoopData^.Main_Handle = 0 then
+  begin
+    ShowMessage('정상적인 과정으로 사용을 하십시요(1)!!!');
+    Close;
+    Application.Terminate;
+    Exit;
+  end;
+  if CoopData^.menuclick = 0 then
+  begin
+    ShowMessage('정상적인 과정으로 사용을 하십시요(2)!!!');
+    Close;
+    Application.Terminate;
+    Exit;
+  end
+  else
+    CoopData^.menuclick := 0;
+  if CoopData^.SvrConn = 0 then
+  begin
+    ShowMessage('현재 연결된 서버가 없습니다!!!');
+    Close;
+    Application.Terminate;
+    Exit;
+  end;
+
+  case ThisHandleNum of
+    1: CoopData^.Handle1 := Application.Handle;
+    2: CoopData^.Handle2 := Application.Handle;
+    3: CoopData^.Handle3 := Application.Handle;
+  else
+    begin
+      ShowMessage('잠시 후 다시 시도하십시요!!!');
+      Close;
+      Application.Terminate;
+      Exit;
+    end;
+  end;
+
+  mpst_code := CoopData^.mpst_code;
+  mpst_name := CoopData^.mpst_name;
+  j_code := CoopData^.j_code;
+  c_code := CoopData^.c_code;
+  org_code := CoopData^.org_code;
+  svrconn := CoopData^.SvrConn;
+  PromptStr := CoopData^.prompt_ab;
+  if ((mpst_code = '365818276') and (PromptStr = 'Z')) then
+  begin
+    if MessageDlg('디버깅모드로 실행하시겠습니까?', mtConfirmation, [mbNO, mbOK], 0) = mrNO then
+      PromptStr := '';
+  end
+  else
+    PromptStr := '';
+
+  case svrconn of
+    1:
+      begin
+        db_coopbase.HostName := CoopData^.DBHost_1st;
+        db_coopbase.Database := CoopData^.DBName_1st;
+        db_coopbase.User := CoopData^.DBLogin_1st;
+        db_coopbase.Password := CoopData^.DBPassword_1st;
+      end;
+    2:
+      begin
+        db_coopbase.HostName := CoopData^.DBHost_2nd;
+        db_coopbase.Database := CoopData^.DBName_2nd;
+        db_coopbase.User := CoopData^.DBLogin_2nd;
+        db_coopbase.Password := CoopData^.DBPassword_2nd;
+      end;
+    3:
+      begin
+        db_coopbase.HostName := CoopData^.DBHost_3rd;
+        db_coopbase.Database := CoopData^.DBName_3rd;
+        db_coopbase.User := CoopData^.DBLogin_3rd;
+        db_coopbase.Password := CoopData^.DBPassword_3rd;
+      end;
+  end;
+  db_coopbase.Protocol := 'mysql-5';
+  if mpst_code = 'H11074064' then
+    showmessage(MySQL_Initiate(db_coopbase, qrysql))
+  else
+    MySQL_Initiate(db_coopbase, qrysql);
+
+  if (org_code <> '0023') and (org_code <> 'A049') and (org_code <> '0039') then // 2014-01-17 cug=752522 0039 추가
+  begin
+    AshStr := '본 프로그램은'
+      + #13#10
+      + #13#10
+      + '[(주)쿱엔지니어링-(0023)]'
+      + #13#10
+      + '[(주)클러스터지원그룹(CMG)-(A049)]'
+      + #13#10
+      + '[(주)씨엘씨(CLC)-(0039)]' // 2014-01-17 cug=752522 0039 추가
+      + #13#10
+      + #13#10
+      + '단체에서만 사용할 수 있습니다!!!';
+    Showmessage(AshStr);
+    Close;
+    Application.Terminate;
+    db_coopbase.Disconnect;
+    Exit;
+  end;
+
+  //단체열기
+  AshSQL := 'Select o_code,o_name'
+    + ' from org'
+    + ' Where o_code in (Select o_code from staff'
+    + ' Where m_code="' + mpst_code + '"'
+    + ' and o_code in ("0023","A049","0039")' //,"0036")'
+    + ' and program_list like "%' + Application.Title + '%"'
+    + ' and admin_ab="A")'
+    + ' and p_ab="A"';
+  Ashchk := MySQL_Assign(db_coopbase, qrysql, ashsql, tblorg);
+
+  try
+    Ashint := strtoint(ashchk);
+  except
+    db_coopbase.Disconnect;
+    Showmessage('서버연결에 실패했습니다.!! 프로그램을 종료합니다~~!!');
+    Close;
+    Application.Terminate;
+    Exit;
+  end;
+
+  if tblorg.RecordCount = 0 then
+  begin
+    ShowMessage('해당 프로그램에 접근가능한 단체가 없습니다. 프로그램을 종료합니다!!!');
+    Close;
+    Application.Terminate;
+    Exit;
+  end;
+  tblorg.IndexFieldNames := 'o_name;o_code';
+  tblorg.Locate('o_code', org_code, []);
+  edtorg.Text := tblorg.FieldByName('o_name').AsString;
+
+  //단체선택 버튼 클릭
+  BitBtn2Click(BitBtn2);
+
+  //************************************************************************************
+  cms21_created_day := StrToDate('2004' + DateSeparator + '12' + DateSeparator + '31');
+  cms21_unified_day := StrToDate('2004' + DateSeparator + '09' + DateSeparator + '30');
+  cms21_unified_day_update := StrToDate('2004' + DateSeparator + '09' + DateSeparator + '30');
+
+  AshSQL := 'Select tbl_name,created_day,unified_day'
+    + ' from daytable_cre_uni_dro'
+    + ' Where a_day >= "' + FormatDateTime('yyyy-mm-dd', Now - 1) + '"'
+    + ' and tbl_name = "cms21_"'
+    + ' Order by a_day Desc'
+    + ' Limit 1';
+  Ashchk := MySQL_Assign(db_coopbase, qrysql, Ashsql, qry_imsi);
+
+  try
+    Ashint := strtoint(aShchk);
+  except
+    db_coopbase.Disconnect;
+    ShowMessage('잠시 후 다시 시도하십시요!!! ERR:278');
+    Close;
+    Application.Terminate;
+    Exit;
+  end;
+
+  if qry_imsi.RecordCount > 0 then
+  begin
+    cms21_created_day := qry_imsi.FieldByName('created_day').AsDateTime;
+    if FormatDateTime('yyyymmdd', qry_imsi.FieldByName('unified_day').AsDateTime) = '20041231' then
+    begin
+      AshSQL := 'Select Now() as ashdate';
+      Ashchk := MySQL_Assign(db_coopbase, qrysql, Ashsql, qry_imsi);
+      cms21_unified_day_update := StrToDate(DateToStr(qry_imsi.FieldByName('ashdate').AsDateTime));
+      cms21_unified_day_update := StrToDate(DateToStr(cms21_unified_day_update - 186));
+    end
+    else
+    begin
+      cms21_unified_day := qry_imsi.FieldByName('unified_day').AsDateTime;
+      cms21_unified_day_update := cms21_unified_day + 1;
+    end;
+  end;
+  //************************************************************************************
+  //************************************************************************************
+  orders_created_day := StrToDate('2004' + DateSeparator + '12' + DateSeparator + '31');
+  orders_unified_day := StrToDate('2004' + DateSeparator + '09' + DateSeparator + '30');
+  orders_unified_day_update := StrToDate('2004' + DateSeparator + '09' + DateSeparator + '30');
+
+  AshSQL := 'Select tbl_name,created_day,unified_day'
+    + ' from daytable_cre_uni_dro'
+    + ' Where a_day >= "' + FormatDateTime('yyyy-mm-dd', Now - 1) + '"'
+    + ' and tbl_name = "orders_"'
+    + ' Order by a_day Desc'
+    + ' Limit 1';
+  Ashchk := MySQL_Assign(db_coopbase, qrysql, ashsql, qry_imsi);
+
+  try
+    ashint := strtoint(AShchk);
+  except
+    db_coopbase.Disconnect;
+    ShowMessage('잠시 후 다시 시도하십시요!!! ERR:312');
+    Close;
+    Application.Terminate;
+    Exit;
+  end;
+
+  if qry_imsi.RecordCount > 0 then
+  begin
+    orders_created_day := qry_imsi.FieldByName('created_day').AsDateTime;
+    if FormatDateTime('yyyymmdd', qry_imsi.FieldByName('unified_day').AsDateTime) = '20041231' then
+    begin
+      AshSQL := 'Select Now() as ashdate';
+      Ashchk := MySQL_Assign(db_coopbase, qrysql, ashsql, qry_imsi);
+      orders_unified_day_update := StrToDate(DateToStr(qry_imsi.FieldByName('ashdate').AsDateTime));
+      orders_unified_day_update := StrToDate(DateToStr(orders_unified_day_update - 186));
+    end
+    else
+    begin
+      orders_unified_day := qry_imsi.FieldByName('unified_day').AsDateTime;
+      orders_unified_day_update := orders_unified_day + 1;
+    end;
+  end;
+  //************************************************************************************
+
+
+  AshSQL := 'Select fkind, fval, fname'
+    + ' from code where fkind="bank"';
+  ashchk := MySQL_Assign(db_coopbase, qrysql, ashsql, qryCode);
+
+  try
+    Ashint := strtoint(Ashchk);
+  except
+    db_coopbase.Disconnect;
+    Showmessage('서버연결에 실패했습니다.!! ( code ) Err : 381');
+    Exit;
+  end;
+
+  //전표처리시 연결매장코드에 전표분개해야함
+  //maejang 조합코드랑 연결되어 있다..
+  AshSQL := 'Select m_code, maejang_code'
+    + ' from membership where length(maejang_code)=4';
+  Memo1.Lines.Add('qrymembership : ' + AshSQL);
+  Memo1.Lines.Add('');
+  Ashchk := MySQL_Assign(db_coopbase, qrysql, ashsql, qrymembership);
+
+  try
+    Ashint := strtoint(ashchk);
+  except
+    db_coopbase.Disconnect;
+    Showmessage('서버연결에 실패했습니다.!! ( membership ) Err : 390');
+    Exit;
+  end;
+
+  Ashm_codeList := '"........."';
+  qrymembership.first;
+  while not qrymembership.eof do
+  begin
+    Ashm_codeList := Ashm_codeList + ',"' + qrymembership.FieldByName('m_code').AsString + '"';
+    qrymembership.Next;
+  end;
+
+  AshSQL := 'Select j_code,j_name,c_code,o_code'
+    + ' from johap';
+  Ashchk := MySQL_Assign(db_coopbase, qrysql, Ashsql, qryjohap);
+
+  try
+    Ashint := strtoint(Ashchk);
+  except
+    db_coopbase.Disconnect;
+    Showmessage('서버연결에 실패했습니다.!! ( johap ) Err : 406');
+    Exit;
+  end;
+
+  Set_MainPosition(Form1);
+  db_coopbase.Disconnect;
+end;
+
+procedure TForm1.FormShow(Sender: TObject);
+begin
+  // 2014-01-17
+  if mpst_code <> 'H11074064' then
+    Memo1.Visible := False;
+
+  Label5.Caption := '';
+  Label6.Caption := '';
+  Label7.Caption := '';
+
+  edtFs_day.Date := Now; //인출일..
+  edtFs_day.SetFocus;
+  rg1.ItemIndex := 0; //전표생성옵션..
+  Label3.Caption := '인출일';
+end;
+
+procedure TForm1.BitBtn2Click(Sender: TObject);
+var
+  AshSQL, Ashchk: string;
+  Ashint: integer;
+begin
+  //단체선택
+  if Trim(edtorg.Text) = '' then
+  begin
+    edtorg.SetFocus;
+    Exit;
+  end;
+  Label6.Caption := '';
+  Screen.Cursor := crHourGlass;
+
+  org_code := tblorg.FieldByName('o_code').AsString;
+  edtorg.Text := tblorg.FieldByName('o_name').AsString;
+
+  //센터명
+  AshSQL := 'Select c_code,c_name'
+    + ' from center'
+    + ' Where c_code Not like "%R%"';
+  Ashchk := MySQL_Assign(db_coopbase, qrysql, ashsql, qrycenter);
+
+  try
+    Ashint := strtoint(aShchk);
+  except
+    db_coopbase.Disconnect;
+    Showmessage('서버연결에 실패했습니다.!! ( center ) Err : 460');
+    Exit;
+  end;
+
+  // 조합열기
+  AshSQL := 'Select johap.j_code, johap.j_name, johap.c_code, johap.o_code'
+    + ' from johap, staff_johap'
+    + ' Where johap.j_name<>"" '
+    + ' and johap.j_code = staff_johap.j_code'
+    + ' and staff_johap.p_ab="A"'
+    + ' and staff_johap.m_code="' + mpst_code + '"'
+    + ' and johap.o_code="' + org_code + '"'
+    + ' and staff_johap.o_code="' + org_code + '"'
+    + ' order by johap.j_name, johap.j_code';
+  Ashchk := MySQL_Assign(db_coopbase, qrysql, ashsql, tbljohap);
+  try
+    Ashint := strtoint(Ashchk);
+  except
+    db_coopbase.Disconnect;
+    ShowMessage('서버연결에 실패하였습니다!!! (Johap:476)');
+    Exit;
+  end;
+
+  tbljohap.Locate('j_code', j_code, []);
+  edtjname.Text := tbljohap.FieldByName('j_name').AsString;
+
+  //조합원명
+  AshSQL := 'Select m_code,m_name'
+    + ' from members'
+    + ' Where j_code = "' + tbljohap.fieldByName('j_code').AsString + '"';
+  Ashchk := MySQL_Assign(db_coopbase, qrysql, Ashsql, qrymembers);
+
+  try
+    Ashint := strtoint(AShchk);
+  except
+    db_coopbase.Disconnect;
+    Showmessage('서버연결에 실패했습니다.!! ( members ) Err : 487');
+    Exit;
+  end;
+
+  edtorg.Enabled := False;
+  BitBtn2.Enabled := False;
+  BitBtn3.Enabled := True;
+
+  db_coopbase.Disconnect;
+
+  Form1.Caption := Application.Title + '[작업영역: ' + edtorg.Text + ']'; //Application.Title
+
+  Screen.Cursor := crDefault;
+  db_coopbase.Disconnect;
+end;
+
+//단체선택 취소
+
+procedure TForm1.BitBtn3Click(Sender: TObject);
+begin
+  //단체취소
+  if (tblCms.Active) then tblCms.Close;
+  if (tblorders.Active) then tblorders.Close;
+
+  pb1.Position := 0;
+  org_code := '';
+  c_code := '';
+  j_code := '';
+  edtjname.Text := '';
+
+  Label5.Caption := '';
+  Label6.Caption := '';
+  Label7.Caption := '';
+
+  Bitbtn3.Enabled := False;
+  Bitbtn2.Enabled := True;
+  edtorg.Enabled := True;
+
+  Form1.Caption := Application.Title + '[작업영역: ]'; //Application.Title
+
+  if edtorg.Enabled then
+    edtorg.SetFocus;
+end;
+
+procedure TForm1.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+
+  if (Shift = [ssAlt]) or (Shift = [ssCtrl]) then
+    Exit;
+
+  case Key of
+    VK_F4:
+      begin
+        if btnSave.Enabled then
+          btnSaveClick(btnSave);
+        Key := 0;
+      end;
+    VK_F9:
+      begin
+        if btnSearch.Enabled then
+          btnSearchClick(btnSearch);
+        Key := 0;
+      end;
+    VK_F11:
+      begin
+        if btnExcel.Enabled then
+          btnExcelClick(btnExcel);
+        Key := 0;
+      end;
+
+  end;
+end;
+
+procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  db_coopbase.Disconnect;
+  case ThisHandleNum of
+    1:
+      begin
+        CoopData^.Handle1 := 0;
+        CoopData^.Program1 := '';
+      end;
+    2:
+      begin
+        CoopData^.Handle2 := 0;
+        CoopData^.Program2 := '';
+      end;
+    3:
+      begin
+        CoopData^.Handle3 := 0;
+        CoopData^.Program3 := '';
+      end;
+  end;
+  CoopData^.ProgramCount := CoopData^.ProgramCount - 1;
+end;
+
+procedure TForm1.btnCloseClick(Sender: TObject);
+begin
+  Close;
+end;
+
+procedure TForm1.btnSearchClick(Sender: TObject);
+var
+  AshSQL, AshSubSQL, AshSubSQL2: string;
+  i: integer;
+  AshSum: Real;
+  Ashchk: string;
+  Ashint: integer;
+begin
+  // 조회
+  // (주)쿱냉동0023-2300-2300
+  // (주)친환경식품클러스터 A049-9040-9040
+  // cms21_yyyymmdd 에서 자료추출. 작업자가 결과처리를 해주면 r_ab=B 수신으로 된다.
+  // (주)씨엘씨 추가 0039-3910-3910   // 2014-01-17 cug=752522 lsj
+  if edtorg.Text = '' then Exit;
+  if edtjname.Text = '' then Exit;
+  if rg1.ItemIndex = -1 then Exit;
+
+  Screen.Cursor := crHourGlass;
+  DBGrid1.DataSource := nil;
+
+  //Form2의 조회화면
+  AshSQL := 'Select membership.m_code, members.m_name, membership.maejang_code, johap.j_name'
+    + ' from membership, members, johap'
+    + ' Where membership.m_code=members.m_code'
+    + ' and membership.maejang_code=johap.j_code'
+    + ' and members.j_code="' + tbljohap.FieldByName('j_code').AsString + '"'
+    + ' and length(membership.maejang_code)=4';
+  Memo1.Lines.Add('tblmembership : ' + AshSQL);
+  Memo1.Lines.Add('');
+  Ashchk := MySQL_Assign(db_coopbase, qrysql, ashsql, tblmembership);
+
+  try
+    Ashint := strtoint(Ashchk);
+  except
+    db_coopbase.Disconnect;
+    Showmessage('수수료부과매장 연결시 접속이 원활치 않습니다. 지속적으로 발생되면 전산실에 문의해 주세요!!! err:418');
+    Exit;
+  end;
+
+  //수수료 부과된 매장만 보기..
+  AshSubSQL := '';
+  if chk1.Checked then
+    AshSubSQL := ' and m_code in (' + Ashm_codeList + ')';
+
+
+  case rg1.ItemIndex of //전표생성옵션
+    0: //인출일
+      // 신청금액이 아닌 출금액으로 반영시켜야 한다. 2012-10-19 s_money --> r_money로 변경함!!
+      begin
+        if StrToDate(DateToStr(edtFs_day.Date)) > cms21_unified_day then
+        begin
+          AshSQL := 'Select sno, m_code, num, j_code, c_code, s_money, r_money, kind, bank, r_ab'
+            + ' From cms21_' + FormatDateTime('yyyymmdd', edtFs_day.Date)
+            + ' Where s_day = "' + FormatDateTime('yyyy-mm-dd', edtFs_day.Date) + '"'
+            + ' and j_code = "' + tbljohap.FieldByName('j_code').AsString + '"'
+            + AshSubSQL;
+          if mpst_code <> 'H11074064' then
+            AshSQL := AshSQL + ' and r_ab = "B"' //수신된것만
+
+        end
+        else
+        begin
+          AshsQL := 'Select sno, m_code, num, j_code, c_code, s_money, r_money, kind, bank, r_ab'
+            + ' From cms21_' + FormatDateTime('yyyy', edtFs_day.Date)
+            + ' Where s_day = "' + FormatDatetime('yyyy-mm-dd', edtFs_day.Date) + '"'
+            + ' and  j_code = "' + tbljohap.FieldByName('j_code').AsString + '"'
+            + AshSubSQL;
+          if mpst_code <> 'H11074064' then
+            AshSQL := AshSQL + ' and r_ab = "B"'; //수신된것만
+        end;
+        Memo1.Lines.Add('tblCms_imsi : ' + AshSQL);
+        //확인필요..
+        Ashchk := MySQL_Assign(db_coopbase, qrysql, ashsql, qry_imsi);
+
+        try
+          Ashint := strtoint(ashchk);
+          if Ashint = 0 then
+          begin
+            Showmessage('선택한 날짜 또는 선택한 조합에 자료가 없습니다. 확인하세요!!! msg:644');
+            Screen.Cursor := crDefault;
+            edtFs_day.SetFocus;
+            Exit;
+          end;
+        except
+          db_coopbase.Disconnect;
+          Showmessage('연결에 실패했습니다. 재조회 해보시고 전산팀에 문의하세요!! ( cms21_ ) Err : 638');
+          Screen.Cursor := crDefault;
+          Exit;
+        end;
+
+        DBGrid1.DataSource := nil;
+        NoCalBool := True;
+        NoScrollBool := True;
+        tblCms.Close;
+        tblCms.LoadFromDataSet(qry_imsi, 0, lmAppend);
+        //DataSet.Close;
+
+        NoCalBool := False;
+        tblCms.SortOnFields('m_code', True, False);
+
+//  tblCms.First;
+
+//  DBGrid1.DataSource := dtstblCms;
+        NoScrollBool := False;
+//  tblCmsAfterScroll(tblCms);
+      end;
+    1: //출고일 orders_yyyymmdd  //물품코드지정됨
+      begin
+        if org_code = 'A049' then //CMG(클러스터지원그룹)
+          AshSubSQL2 := ' and g_code in ("10003CD100","10002CD100","10001CD100")' //POS 유지보수_멀티매장, POS유지보수_복합매장, POS유지보수_일반매장...
+        else // if org_code='0023' then // 2014-01-17막음.
+          AshSubSQL2 := ' and g_code in ("0000200000")'; //A/S*유지보수..
+
+        if StrToDate(DateToStr(edtFs_day.Date)) > orders_unified_day then
+        begin
+          AshSQL := 'Select m_code,g_code,s_day,a_day,c_code,cost'
+            + ' from orders_' + FormatDateTime('yyyymmdd', edtFs_day.Date)
+            + ' Where s_day = "' + FormatDateTime('yyyy-mm-dd', edtFs_day.Date) + '"'
+            + ' and a_day = "' + FormatDateTime('yyyy-mm-dd', edtFs_day.Date) + '"'
+            + AshSubSQL2 //물품코드
+            + AshSubSQL //조합원코드
+            + ' and c_code = "' + tbljohap.FieldByName('j_code').AsString + '"';
+        end
+        else
+        begin
+          AshsQL := 'Select m_code,g_code,s_day,a_day,c_code,cost'
+            + ' from orders_' + FormatDateTime('yyyy', edtFs_day.Date)
+            + ' Where s_day = "' + FormatDatetime('yyyy-mm-dd', edtFs_day.Date) + '"'
+            + ' and a_day = "' + FormatDateTime('yyyy-mm-dd', edtFs_day.Date) + '"'
+            + AshSubSQL2 //물품코드
+            + AshSubSQL //조합원코드
+            + ' and c_code = "' + tbljohap.FieldByName('j_code').AsString + '"';
+        end;
+        //확인필요..
+        Ashchk := MySQL_Assign(db_coopbase, qrysql, ashsql, qry_imsi);
+        try
+          Ashint := strtoint(Ashchk);
+          if Ashint = 0 then
+          begin
+            Showmessage('선택한 날짜 또는 선택한 조합에 자료가 없습니다. 확인하세요!!! msg:688');
+            Screen.Cursor := crDefault;
+            edtFs_day.SetFocus;
+            Exit;
+          end;
+        except
+          db_coopbase.Disconnect;
+          Showmessage('연결에 실패했습니다. 재조회 해보시고 전산팀에 문의하세요!! ( orders_ ) Err : 682');
+          Screen.Cursor := crDefault;
+          Exit;
+        end;
+        DBGrid1.DataSource := nil;
+        NoCalBool := True;
+        NoScrollBool := True;
+        tblorders.Close;
+        tblorders.LoadFromDataSet(qry_imsi, 0, lmAppend);
+        //DataSet.Close;
+
+        NoCalBool := False;
+        tblorders.SortOnFields('m_code', True, False);
+
+        tblorders.First;
+
+       //DBGrid1.DataSource := dtstblorders;
+        NoScrollBool := False;
+       //tblCmsAfterScroll(tblCms);
+      end;
+  end; //case~end
+ //edit1.text := AshSQL;
+  AshSum := 0;
+  if rg1.ItemIndex = 0 then
+  begin
+    tblCms.First;
+    while not tblcms.Eof do
+    begin
+      AshSum := AshSum + tblcms.FieldByName('r_money').AsFloat;
+      tblcms.Next;
+    end;
+  end
+  else
+  begin
+    tblorders.First;
+    while not tblorders.Eof do
+    begin
+      AshSum := AshSum + tblorders.FieldByName('cost').AsFloat;
+      tblorders.Next;
+    end;
+  end;
+
+  if rg1.ItemIndex = 0 then
+  begin
+    DBGrid1.DataSource := dtstblcms;
+    tblcms.First;
+    Label5.Caption := IntToStr(tblcms.RecordCount) + ' 건';
+  end
+  else
+  begin
+    DBGrid1.DataSource := dtstblorders;
+    tblorders.First;
+    Label5.Caption := IntToStr(tblorders.RecordCount) + ' 건';
+  end;
+
+  Label7.Caption := '합 : ' + FormatFloat('#,0', AshSum) + '';
+
+  Screen.Cursor := crDefault;
+  db_coopbase.Disconnect;
+end;
+
+//일괄반영.
+
+procedure TForm1.btnSaveClick(Sender: TObject);
+var
+  AshSQL, Ashm_code, Ashc_code, AshStr: string;
+  AshMsg, Ashmemo, AshCash_ab: string;
+  Ashamount, AshDamt, AshEamt: Real;
+
+  Ash_ab, AshSQL1, Ash_ab_name: string;
+  Ashv_amount, Ashvat: Real; //선급부가세
+  Ashchk: string;
+  Ashint: integer;
+begin
+
+  // 일괄반영
+  // 금액은 0이 아니어야 하고,
+  // 수신여부가 B어야 하고,
+  // 매장연결코드, 매장연결센터코드, 단체코드 가 반듯이 있어야 하고,
+  // 처리매장갯수 넣어주기
+
+  if edtorg.Text = '' then Exit;
+  if edtjname.Text = '' then Exit;
+
+  if rg1.ItemIndex = 0 then
+    pb1.Max := tblCms.RecordCount
+  else pb1.Max := tblorders.RecordCount;
+
+  // 2012-11-09 처리당일로 now로 처리한것을 각각 출금일, 출고일로 반영해달라는 요청으로 변경함
+  // cug= 563919 28번댓글  lsj 수정
+  AshTDate := FormatDateTime('yyyy-mm-dd', edtFs_day.Date); // 계정원장 처리일
+  AshCDate := FormatDatetime('yyyy-mm-dd', edtFs_day.Date); // 계정원장 반영일
+
+  pb1.Position := 0;
+  Screen.Cursor := crHourGlass;
+
+  if rg1.ItemIndex = 0 then //인출일
+  begin
+    Ash_ab := 'A';
+    Ash_ab_name := 'CMS'
+  end
+  else if rg1.ItemIndex = 1 then //출고일
+  begin
+    Ash_ab := 'B';
+    Ash_ab_name := '출고'
+  end;
+
+  // 원장에 반영유무 체크하기 테이블별도로 만듦
+  AshSQL := 'select i_day,j_code,cms_orders_ab'
+    + ' from acc_yn'
+    + ' Where i_day="' + FormatDateTime('yyyy-mm-dd', edtFs_day.Date) + '"'
+    + ' and j_code="' + tbljohap.FieldByName('j_code').AsString + '"'
+    + ' and cms_orders_ab="' + Ash_ab + '"';
+  Ashchk := MySQL_Assign(db_coopbase, qrysql, Ashsql, qry_imsi);
+
+  try
+    Ashint := strtoint(Ashchk);
+  except
+    db_coopbase.Disconnect;
+    Showmessage('연결에러입니다. 메세지가 지속적으로 나올때 전산실로 문의바랍니다.!!! ( acc_yn ) Err : 785');
+    Screen.Cursor := crDefault;
+    Exit;
+  end;
+
+  if qry_imsi.RecordCount <> 0 then
+  begin
+    if MessageDlg('이미 계정원장에 반영된 일자 입니다!!. 이중반영될수도 있습니다. 그래도 처리하시겠습니까???', mtConfirmation, [mbNO, mbOK], 0) = mrNO then
+    begin
+      Screen.Cursor := crDefault;
+      Exit;
+    end;
+
+    // 그래도 처리하면 update
+    //acc_yn 수수료 처리유무 테이블..
+    AshSQL := 'Update acc_yn'
+      + ' Set'
+      + ' etc_memo="작업자에의해 재처리함/' + FormatDateTime('yyyy-mm-dd', now()) + '"'
+      + ',mpst_code = "' + mpst_code + '"'
+      + ',p_day = now()'
+      + ',chk_svr = "' + IntToStr(svrconn) + '"'
+      + ' Where i_day = "' + FormatDateTime('yyyy-mm-dd', edtFs_day.Date) + '"' //CMS 입금일자 또는 출금날짜
+      + ' and j_code = "' + tbljohap.FieldByName('j_code').AsString + '"'
+      + ' and cms_orders_ab= "' + Ash_ab + '"'; //CMS : A [] 출고 : B
+    AshSQL1 := 'Update acc_yn'
+      + ' Set'
+      + ' etc_memo="작업자에의해 재처리함/' + FormatDateTime('yyyy-mm-dd', now()) + '"'
+      + ',mpst_code = "' + mpst_code + '"'
+      + ',p_day = now()'
+      + ',chk_svr = "' + IntToStr(svrconn) + '"'
+      + ',history = concat(history,"' + SQLToHistory(AshSQL) + '")'
+      + ' Where i_day = "' + FormatDateTime('yyyy-mm-dd', edtFs_day.Date) + '"'
+      + ' and j_code = "' + tbljohap.FieldByName('j_code').AsString + '"'
+      + ' and cms_orders_ab= "' + Ash_ab + '"';
+    Ashchk := MySQL_UpDel(db_coopbase, qrysql, Ashsql1);
+
+    try
+      Ashint := strtoint(Ashchk);
+    except
+      db_coopbase.Disconnect;
+      Showmessage('중복저장하면서 서버연결에 실패했습니다.!!! Err : 820');
+      Screen.Cursor := crDefault;
+      Exit;
+    end;
+  end
+  else // 하나도 없으면 처리유무테이블에 인서트 하고 분개시작한다...
+  begin
+    AshSQL := 'Insert Into acc_yn'
+      + ' (i_day,j_code,cms_orders_ab,etc_memo,mpst_code,p_day,chk_svr)'
+      + ' Values'
+      + ' ("' + FormatDateTime('yyyy-mm-dd', edtFs_day.Date) + '"'
+      + ',"' + tbljohap.FieldByName('j_code').AsString + '"'
+      + ',"' + Ash_ab + '"'
+      + ',"' + Ash_ab_name + '-' + Label5.Caption + '반영"'
+      + ',"' + mpst_code + '"'
+      + ',Now()'
+      + ',"' + IntToStr(svrconn) + '")';
+    AshSQL1 := 'Insert Into acc_yn'
+      + ' (i_day,j_code,cms_orders_ab,etc_memo,mpst_code,p_day,chk_svr,history)'
+      + ' Values'
+      + ' ("' + FormatDateTime('yyyy-mm-dd', edtFs_day.Date) + '"'
+      + ',"' + tbljohap.FieldByName('j_code').AsString + '"'
+      + ',"' + Ash_ab + '"'
+      + ',"' + Ash_ab_name + '-' + Label5.Caption + '반영"'
+      + ',"' + mpst_code + '"'
+      + ',Now()'
+      + ',"' + IntToStr(svrconn) + '"'
+      + ',"' + SQLToHistory(AshSQL) + '")';
+    Ashchk := MySQL_UpDel(db_coopbase, qrysql, ashsql1);
+
+    try
+      Ashint := strtoint(Ashchk);
+    except
+      db_coopbase.Disconnect;
+      Showmessage('원장처리유무 등록시 에러!!! 전산실에 문의하세요~~ Err : 852');
+      Screen.Cursor := crDefault;
+      Exit;
+    end;
+  end;
+
+  //acc_yn(수수료 처리여부 완료..)
+  case rg1.ItemIndex of
+    0: //CMS인출자료반영
+      begin
+        AshStr := 'CMS인출 자료 중 수신 상태이고,'
+          + #10#13
+          + #10#13
+          + '매장연결조합코드가 있는 출금액이 계정원장에 반영됩니다!!'
+          + #10#13
+          + #10#13
+          + #10#13
+          + '수수료부과매장연결코드가 없으면 반영되지 않습니다.'
+          + #10#13
+          + #10#13
+          + '한번 더 확인해 보시기 바랍니다.'
+          + #10#13
+          + #10#13
+          + '계정원장의 [처리일 과 반영일 = 출고일,출금일] 로 반영합니다.'
+          + #10#13
+          + #10#13
+          + #10#13
+          + '정말로 진행하시겠습니까???';
+        if MessageDlg(AshStr, mtConfirmation, [mbNO, mbOK], 0) = mrNO then
+        begin
+          Screen.Cursor := crDefault;
+          Exit;
+        end;
+
+        tblCms.First;
+        while not tblCms.Eof do
+        begin
+          pb1.Position := pb1.Position + 1;
+          pb1.Refresh;
+
+          Ashm_code := tblCms.FieldByName('m_code').AsString;
+          Ashj_code := tblCms.FieldByName('j_code1').AsString; //소속조합
+          Ashc_code := tblCms.FieldByName('c_code1').AsString; //소속센터
+          Asho_code := tblCms.FieldByName('o_code').AsString;
+          Ashamount := tblCms.FieldByName('r_money').AsFloat;
+
+          if tblCms.FieldByName('r_ab').AsString <> 'B' then // 수신상태가 아니면 넘어간다
+          begin
+            tblCms.Next;
+            Continue;
+          end;
+          if tblCms.FieldByName('j_code1').AsString = '' then // 연결매장코드 없으면 넘어간다
+          begin
+            tblCms.Next;
+            Continue;
+          end;
+          if tblCms.FieldByName('o_code').AsString = '' then // 단체코드 없으면 넘어간다.
+          begin
+            tblCms.Next;
+            Continue;
+          end;
+
+          if tblCms.FieldByName('r_money').AsFloat = 0 then // 출금액이 0인것은 반영하지 않음!!
+          begin
+            tblCms.Next;
+            Continue;
+          end;
+
+          Dacntd := '';
+          Dacnte := '';
+          Cacntd := '';
+          Cacnte := '';
+          AshEamt := 0;
+          AshDamt := 0; //과목잔액,세목잔액
+          AshCash_ab := 'A';
+                    //대체
+         //출금일때 적요
+          if tbljohap.FieldByName('j_code').AsString = '2300' then //쿱엔지니어링센타조합..
+            Comment := '' + FormatDateTime('mm', edtFs_day.Date) + '월 CMS출금자동전표/(' + tblorg.FieldByName('o_name').AsString + ')/냉장냉동기유지보수료'
+          else if tbljohap.FieldByName('j_code').AsString = '9040' then // CMG
+            Comment := '' + FormatDateTime('mm', edtFs_day.Date) + '월 CMS출금자동전표/(' + tblorg.FieldByName('o_name').AsString + ')/포스유지보수료';
+
+         //전표번호 :I을 추가해야함.
+          Ac_num := 'I' + '-' + FormatDateTime('yyyymmdd', now())
+            + '-' + Ashj_code; // 20자리중 16자리
+         // account snum값
+          AshSnum := '1';
+
+          AshSQL := 'Select max(snum) as snum'
+            + ' from account'
+            + ' Where tdate="' + AshTdate + '"'
+            + ' and j_code ="' + Ashj_code + '"'
+            + ' and o_code ="' + Asho_code + '"';
+          Ashchk := MySQL_Assign(db_coopbase, qrysql, ashsql, qry_imsi);
+
+          try
+
+          except
+            db_coopbase.Disconnect;
+            Showmessage('연결에 실패했습니다!! ( account ) Err : 942');
+            Screen.Cursor := crDefault;
+            Exit;
+          end;
+
+          if qry_imsi.RecordCount <> 0 then
+            AshSnum := intToStr(qry_imsi.fieldByname('snum').AsInteger + 1);
+
+          //cms인출은 두개 단체 차.대 가 동일함
+          Dacntd := '2415'; // 차:미지급비용
+          Dacnte := '100';
+
+          Cacntd := '2010'; // 대:제예금
+
+          // 2012-12-04 cug=563919 댓글30번에 의해 직영점 분리
+          if (Ashj_code = 'A067') or (Ashj_code = 'A077')
+            or (Ashj_code = 'J014') or (Ashj_code = 'J013')
+            or (Ashj_code = 'J015') // 직영관악점, 정자점, 쌍문점, 신내점, 보정점
+           // 2013-02-15 cug=563919 댓글 38번에 의해 직영 분리
+          or (Ashj_code = 'J016') or (Ashj_code = 'J017')
+            or (Ashj_code = 'J018') or (Ashj_code = 'J019') // 직영철산, 잠실, 구의, 소사
+            or (Ashj_code = '3640') or (Ashj_code = '3650')
+            or (Ashj_code = '3630') or (Ashj_code = '3620')
+            or (Ashj_code = '3660') // CUG=563919 50번댓글 광주전남회계조합
+            or (Ashj_code = '3670') or (Ashj_code = '3680') // 2013-11-07  CUG=563919 53번 답글  3670 풍암점 추가
+                                                                        // 2014-01-08 CUG=563919  61번 답글 로 3680월계점 추가
+          or (Ashj_code = 'J021') or (Ashj_code = 'J022')
+            or (Ashj_code = '4060') or (Ashj_code = '42A0') //CUG(563919) -댓글 68번 2014-05-09 수정함..(쿱스토어울산삼산점)
+            //2014-05-17 쿱스토어부산센터조합 변경.. 이선주님 요청..
+            //2014-05-20 CUG(563919) -댓글 81번 요청에 의해 반영
+          or (Ashj_code = '42A5') or (Ashj_code = '42A9')
+            or (Ashj_code = '42A8') or (Ashj_code = '42A2')
+            or (Ashj_code = '42A3') or (Ashj_code = '42A6')
+            or (Ashj_code = '42A1') or (Ashj_code = '42A7')
+            or (Ashj_code = '4010') or (Ashj_code = '4020')
+            or (Ashj_code = '4030') or (Ashj_code = '4040')
+            or (Ashj_code = '4050') or (Ashj_code = '4060')
+            //2014-05-20 END
+            //2015-03-30 START CUG(563919)-95댓글
+          or (Ashj_code = '42A4') or (Ashj_code = '42B0') or (Ashj_code = '42B1') or (Ashj_code = '42B2') //쿱스토어 부산 거제점, 토곡점..
+            //2015-03-30 END CUG(563919)-95댓글
+          //CUG(563919)-86 2015-03-09 김현호님 요청 START
+          or (Ashj_code = 'J023') or (Ashj_code = 'J024') or (Ashj_code = 'J025') //쿱스토어 목동점, 성공회대점 변경..
+          //CUG(563919)-86 2015-03-09 김현호님 요청 END
+          //CUG(563919)-97번 2015-06-01 김현호님 요청
+          or (Ashj_code = 'J026') or (Ashj_code = 'J027') //CUG(563919)-105번 김샛별님 요청 2015-09-17 반영
+          //CUG(563919)-97번 2015-06-01 김현호님 요청 END
+          // CUG(563919)-107 2015-10-30(류연화님 요청) START
+          or (Ashj_code = '4080') // 울산 신정점
+          // CUG(563919)-107 2015-10-30(류연화님 요청) END
+          // CUG(563919)-108 2015-10-30(조현영님 요청) START
+          or (Ashj_code = '3690') // 광주전남 진월점
+          // CUG(563919)-108 2015-10-30(조현영님 요청) END
+          or (Ashj_code='52A8') //CPG(476173)-27 2015-11-30
+          then // 2014-03-06 CUG=563919 66번 답글 로  쿱스토어대치점,쿱스토어서울랜드 lsj추가함
+            Cacnte := '101'
+          else if (Ashj_code = 'A060') then // 직영분당이매점
+            Cacnte := '401'
+          //2014-12-09 CUG(563919)-83 START 김샛별님 요청
+          else if (Ashj_code = 'C002') then
+            Cacnte := '100'
+          //2014-12-09 CUG(563919)-83 END
+          else
+            Cacnte := '201';
+        // 2012-12-04 cug=563919 댓글30번에 의해 직영점 분리 끝!
+
+        //**원장반영
+          SaveAcc('D', Dacntd, Dacnte, Ashj_code, Comment, Ashamount, AshDamt, AshEamt, AshCDate, AshCash_ab, Ac_num);
+          SaveAcc('C', Cacntd, Cacnte, Ashj_code, Comment, Ashamount, AshDamt, AshEamt, AshCDate, AshCash_ab, Ac_num);
+          Application.ProcessMessages;
+          tblCms.Next;
+        end;
+
+      end;
+
+    1: //출고자료 반영
+      begin
+        AshStr := '출고 자료 자동전표 발생합니다...'
+          + #10#13
+          + #10#13
+          + '매장연결조합코드가 있고, 출고액이 있는것만 계정원장에 반영됩니다!!'
+          + #10#13
+          + #10#13
+          + #10#13
+          + '수수료부과매장연결코드가 없으면 반영되지 않습니다.'
+          + #10#13
+          + #10#13
+          + '한번 더 확인해 보시기 바랍니다.'
+          + #10#13
+          + #10#13
+          + '계정원장의 처리일과 반영일은 처리하는 당일로 반영합니다.'
+          + #10#13
+          + #10#13
+          + #10#13
+          + '정말로 진행하시겠습니까???';
+        if MessageDlg(AshStr, mtConfirmation, [mbNO, mbOK], 0) = mrNO then
+        begin
+          Screen.Cursor := crDefault;
+          Exit;
+        end;
+        tblorders.First;
+        while not tblorders.Eof do
+        begin
+          Ashvat := 0;
+          Ashv_amount := 0;
+          Ashamount := 0;
+          pb1.Position := pb1.Position + 1;
+          pb1.Refresh;
+
+          Ashm_code := tblorders.FieldByName('m_code').AsString;
+          Ashj_code := tblorders.FieldByName('j_code1').AsString; //소속조합
+          Ashc_code := tblorders.FieldByName('c_code1').AsString; //소속센터
+          Asho_code := tblorders.FieldByName('o_code').AsString;
+          Ashamount := tblorders.FieldByName('cost').AsFloat; //미지급비용
+
+          Ashv_amount := Round(Ashamount / 1.1); //지급수수료
+          Ashvat := Ashamount - Ashv_amount; //선급부가세
+
+
+          if tblorders.FieldByName('j_code1').AsString = '' then // 연결매장코드 없으면 넘어간다
+          begin
+            tblorders.Next;
+            Continue;
+          end;
+          if tblorders.FieldByName('o_code').AsString = '' then // 단체코드 없으면 넘어간다.
+          begin
+            tblorders.Next;
+            Continue;
+          end;
+          if tblorders.FieldByName('cost').AsFloat = 0 then // 출고금액이 0이면 넘어간다.
+          begin
+            tblorders.Next;
+            Continue;
+          end;
+          Dacntd := '';
+          Dacnte := '';
+          Cacntd := '';
+          Cacnte := '';
+          AshEamt := 0; AshDamt := 0; //과목잔액,세목잔액
+
+          AshCash_ab := 'A'; //대체
+
+        //출고일때 적요
+          if tbljohap.FieldByName('j_code').AsString = '2300' then
+            Comment := tblorg.FieldByName('o_name').AsString + '' + FormatDateTime('mm', edtFs_day.Date) + '월 냉장냉동기유지보수료 자동전표'
+          else if tbljohap.FieldByName('j_code').AsString = '9040' then // CMG
+            Comment := tblorg.FieldByName('o_name').AsString + '' + FormatDateTime('mm', edtFs_day.Date) + '월 포스유지보수료 자동전표';
+
+        //전표번호 :I을 추가해야함.
+          Ac_num := 'I' + '-' + FormatDateTime('yyyymmdd', now())
+            + '-' + Ashj_code; // 20자리중 16자리
+
+          AshSnum := '1';
+
+          AshSQL := 'Select max(snum) as snum'
+            + ' from account'
+            + ' Where tdate="' + AshTdate + '"'
+            + ' and j_code ="' + Ashj_code + '"'
+            + ' and o_code ="' + Asho_code + '"';
+          Ashchk := MySQL_Assign(db_coopbase, qrysql, Ashsql, qry_imsi);
+
+          try
+            Ashint := strtoint(ashchk);
+          except
+            db_coopbase.Disconnect;
+            Showmessage('연결에 실패했습니다!! ( account ) Err : 1041');
+            Screen.Cursor := crDefault;
+            Exit;
+          end;
+
+          if qry_imsi.RecordCount <> 0 then
+            AshSnum := intToStr(qry_imsi.fieldByname('snum').AsInteger + 1);
+
+          // 출고는 두개 단체 차변계정세목이 틀림
+          if tbljohap.FieldByName('j_code').AsString = '2300' then //쿱냉동
+          begin
+            Dacntd := '1765'; // 차:지급수수료-냉장냉동유지보수
+            Dacnte := '200';
+          end
+          else if tbljohap.FieldByName('j_code').AsString = '9040' then // CMG
+          begin
+          // 2014-01-08 CUG=563919 60번 답글
+            if (Ashm_code = 'X12120004') or (Ashm_code = 'X13070003')
+              or (Ashm_code = 'X12070005') or (Ashm_code = 'X13100019')
+              or (Ashm_code = 'X12120018') // 구의,대치,보정,서울랜,소사
+              or (Ashm_code = 'X12050003') or (Ashm_code = 'X12050005')
+              or (Ashm_code = 'X12100007')
+              //2015-03-09 CUG(563919)-87 김현호님 요청 START
+            or (Ashm_code = 'X14120004') or (Ashm_code = 'X14080014') or (Ashm_code = 'X14090001')
+              //2015-03-09 CUG(563919)-87 김현호님 요청 END
+            //2015-06-22 CUG(563919)-100 김현호님 요청 START
+            or (Ashm_code = 'X15020001')
+            //2015-06-22 CUG(563919)-100 김현호님 요청 END
+            then // 신내,쌍문,잠실
+            begin
+              Dacntd := '1765'; // 차:
+              Dacnte := '112';
+            end
+            else if (Ashm_code = 'X12030005') then //행복한밥상
+            begin
+              Dacntd := '1765'; // 차:
+              Dacnte := '919';
+            end
+          // 2014-01-08 End
+            else
+            begin
+              Dacntd := '1765'; // 차:지급수수료-포스유지관리
+              Dacnte := '119';
+            end;
+          end;
+        //**차변 원장반영1
+        //지급수수료 변수명으로 넘김
+          Ashamount := Ashv_amount;
+          SaveAcc('D', Dacntd, Dacnte, Ashj_code, Comment, Ashamount, AshDamt, AshEamt, AshCDate, AshCash_ab, Ac_num);
+
+        //** 차변 원장반영2
+        //차변동일하게 선급부가세 발생.
+          Dacntd := '2065';
+          Dacnte := '100';
+          Ashamount := Ashvat;
+          SaveAcc('D', Dacntd, Dacnte, Ashj_code, Comment, Ashamount, AshDamt, AshEamt, AshCDate, AshCash_ab, Ac_num);
+
+        ////////////////// // 대변은 같음
+          Cacntd := '2415'; // 대:미지급비용
+          Cacnte := '100';
+        //**대변 원장반영
+          Ashamount := tblorders.FieldByName('cost').AsFloat;
+          SaveAcc('C', Cacntd, Cacnte, Ashj_code, Comment, Ashamount, AshDamt, AshEamt, AshCDate, AshCash_ab, Ac_num);
+          Application.ProcessMessages;
+          tblorders.Next;
+        end;
+      end;
+
+  end; //case ~ end
+  Showmessage('반영하였습니다!! 계정원장 확인하세요~~~');
+  Screen.Cursor := crDefault;
+  db_coopbase.Disconnect;
+end;
+
+procedure TForm1.SaveAcc(cd_chk, d_code, e_code, Ashj_code, Ashcomm: string; Ashamount, AshDamt, AshEamt: real; AshCDate, AshCash_ab, AshAc_num: string);
+var
+  AshSQL: string;
+  AshCnt: integer;
+  Ashchk: string;
+  Ashint: integer;
+begin
+  // account에 반영하기
+  if cd_chk = 'D' then //차변
+  begin
+    AshCnt := 1;
+    while AshCnt <= 5 do
+    begin
+      if AshSnum = '' then
+      begin
+         // 총계정원장에 입력될 때의 키값으로서의 번호 구하기
+         // 해당일에 해당 센터의 마지막번호 +1
+        AshSql := 'select snum'
+          + ' from account'
+          + ' where tdate="' + AshTDate + '"'
+          + ' and o_code ="' + Asho_code + '"'
+          + ' order by snum desc ';
+        Ashchk := MySQL_Assign(db_coopbase, qrysql, AshSQL, qry_etc);
+
+        try
+          Ashint := strtoint(ashchk);
+        except
+          db_coopbase.Disconnect;
+          Showmessage('계정원장 전표번호 추출시 서버연결에 실패했습니다.!! ( account ) Err : 1114');
+          Screen.Cursor := crDefault;
+          Exit;
+        end;
+
+        if qry_etc.RecordCount = 0 then
+          AshSnum := '1' // 전역변수          // 총계정원장에 입력된 키값으로의 번호
+        else
+          AshSnum := IntToStr(qry_etc.FieldByName('snum').AsInteger + 1);
+      end;
+
+      AshSQL := 'Insert into account (tdate, snum, cd_chk, d_code, j_code, p_ab, e_code, o_code, comment'
+        + ', d_amount, d_ramount, e_ramount, cdate, cash_ab, sdate, post_code, ac_num, mpst_code, p_day, chk_svr)'
+        + ' Values ('
+        + '"' + AshTdate + '"'
+        + ',"' + AshSnum + '"'
+        + ',"' + cd_chk + '"'
+        + ',"' + d_code + '"'
+        + ',"' + Ashj_code + '"'
+        + ',"A"'
+        + ',"' + e_code + '"'
+        + ',"' + Asho_code + '"'
+        + ',"' + Ashcomm + '"'
+        + ',' + floatToStr(AshAmount)
+        + ',' + floatToStr(AshDamt)
+        + ',' + floatToStr(AshEamt)
+        + ',"' + AshCDate + '"' //발생일자
+        + ',"' + AshCash_ab + '"'
+        + ',now()'
+        + ',"0000"'
+        + ',"' + AshAc_num + '"'
+        + ',"' + mpst_code + '"'
+        + ',now()'
+        + ',"' + intToStr(SvrConn) + '")';
+//edit1.Text := AshSQL;
+      Ashchk := MySQL_UpDel(db_coopbase, qrysql, Ashsql);
+
+      try
+        AshCnt := 9;
+      except
+        AshCnt := AshCnt + 1;
+        AShSnum := '';
+      end;
+    end; //while~end
+    if Ashcnt = 6 then
+    begin
+      showmessage('입력처리 에러 Account_차변Insert_Error_1159  : 담당자에게 문의 바랍니다.');
+      showmessage(AshSQL);
+      Exit;
+    end;
+  end
+  else //대변
+  begin
+    AshSQL := 'Insert into account (tdate, snum, cd_chk, d_code, j_code, p_ab, e_code, o_code, comment'
+      + ', c_amount, d_ramount, e_ramount, cdate, cash_ab, sdate, post_code, ac_num, mpst_code, p_day, chk_svr)'
+      + ' Values ('
+      + '"' + AshTdate + '"'
+      + ',"' + AshSnum + '"'
+      + ',"' + cd_chk + '"'
+      + ',"' + d_code + '"'
+      + ',"' + Ashj_code + '"'
+      + ',"A"'
+      + ',"' + e_code + '"'
+      + ',"' + Asho_code + '"'
+      + ',"' + Ashcomm + '"'
+      + ',' + floatToStr(AshAmount)
+      + ',' + floatToStr(AshDamt)
+      + ',' + floatToStr(AshEamt)
+      + ',"' + AshCDate + '"' //발생일자
+      + ',"' + AshCash_ab + '"'
+      + ',now()'
+      + ',"0000"'
+      + ',"' + AshAc_num + '"'
+      + ',"' + mpst_code + '"'
+      + ',now()'
+      + ',"' + intToStr(SvrConn) + '")';
+//edit2.text := AshSQL;
+    aShchk := MySQL_UpDel(db_coopbase, qrysql, ashsql);
+
+    try
+      Ashint := strtoint(Ashchk);
+    except
+      showmessage('입력처리 에러 Account_대변Insert_Error_1192  : 담당자에게 문의 바랍니다.');
+      showmessage(AshSQL);
+      Exit;
+    end;
+  end;
+  db_coopbase.Disconnect;
+end;
+
+procedure TForm1.btnExcelClick(Sender: TObject);
+var
+  i, j, cntR, cntC: integer;
+  v, vTitle: variant;
+begin
+  //엑셀
+  if rg1.ItemIndex = 0 then
+  begin
+    if ((tblCms.Active = False) or (tblCms.RecordCount = 0)) then
+    begin
+      ShowMessage('CMS인출자료 조회 후 엑셀출력 하세요!!!');
+      edtFs_day.SetFocus;
+      Exit;
+    end;
+  end
+  else if ((tblorders.Active = False) or (tblorders.RecordCount = 0)) then
+  begin
+    ShowMessage('출고자료 조회 후 엑셀출력 하세요!!!');
+    edtFs_day.SetFocus;
+    Exit;
+  end;
+
+  Screen.Cursor := crHourGlass;
+  DBGrid1.DataSource := nil;
+
+{  cntR := tblcms.RecordCount;    //엑셀줄 수
+
+  vTitle := VarArrayCreate([1, AshCount], VarVariant);
+    try
+      v := CreateOleObject('Excel.application');
+    except
+      ShowMessage('Excel이 설치되어 있지 않습니다!!!');
+      Exit;
+    end;
+   v.WorkBooks.Add;
+   v.Visible := False;
+   i:=1;
+   j:=1;
+   While i <= AshCount-1 do
+   begin
+     vTitle:= tblcms.Fields[i-1].FieldName;
+   i:=i+1
+   end;
+   v.Range['A1', CHR(64 + AshCount)+'1'].Value := vTitle;
+   tblcms.First;
+   While not tblcms.Eof do
+   begin
+    j:=1;
+
+   tblcms.Next;
+   end;
+
+
+
+   try
+     v.WorkBooks.Close;
+   except
+   end;
+   try
+     v.quit ;
+   except
+   end;
+   try
+     v := unassigned;
+   except
+   end;
+}
+  Excel1.Connect;
+  Excel1.Exec('[WORKBOOK.INSERT(1)]');
+
+  if rg1.ItemIndex = 0 then
+  begin
+    Excel1.PutStr(1, 1, '수수료처리 내역_CMS인출');
+
+    Excel1.PutStr(2, 1, '조합명:' + tbljohap.FieldByName('j_name').AsString + '');
+
+    Excel1.PutStr(3, 1, '인출일 :' + Formatdatetime('yyyy-mm-dd', edtFs_day.Date));
+    Excel1.PutStr(3, 4, '출력자 :' + mpst_name);
+    Excel1.PutStr(3, 7, '출력일 :' + FormatDateTime('yyyy-mm-dd HH:mm:ss', now));
+
+    Excel1.PutStr(4, 1, '인출조합원코드');
+    Excel1.PutStr(4, 2, '조합원명');
+    Excel1.PutStr(4, 3, '신청액');
+    Excel1.PutStr(4, 4, '출금액');
+    Excel1.PutStr(4, 5, '출금종류');
+    Excel1.PutStr(4, 6, '은행코드');
+    Excel1.PutStr(4, 7, '은행명');
+    Excel1.PutStr(4, 8, '연결매장조합코드');
+    Excel1.PutStr(4, 9, '연결매장명');
+    Excel1.PutStr(4, 10, '연결매장소속센터명()');
+    Excel1.PutStr(4, 11, '수신여부');
+
+    tblCms.First;
+    for i := 5 to tblCms.RecordCount + 4 do
+    begin
+      Excel1.PutStr(i, 1, '''' + tblCms.FieldByName('m_code').AsString);
+      Excel1.PutStr(i, 2, tblCms.FieldByName('m_name').AsString);
+      Excel1.PutStr(i, 3, FormatFloat('#,0', tblCms.FieldByName('s_money').AsFloat));
+      Excel1.PutStr(i, 4, FormatFloat('#,0', tblCms.FieldByName('r_money').AsFloat));
+      Excel1.PutStr(i, 5, tblCms.FieldByName('kind_name').AsString);
+      Excel1.PutStr(i, 6, '''' + tblCms.FieldByName('bank').AsString);
+      Excel1.PutStr(i, 7, tblCms.FieldByName('bank_name').AsString);
+      Excel1.PutStr(i, 8, tblCms.FieldByName('j_code1').AsString);
+      Excel1.PutStr(i, 9, tblCms.FieldByName('j_name1').AsString);
+      Excel1.PutStr(i, 10, tblCms.FieldByName('c_name1').AsString + '(' + tblCms.FieldByName('c_code1').AsString + ')');
+      Excel1.PutStr(i, 11, tblCms.FieldByName('r_ab_name').AsString);
+
+
+      tblCms.Next;
+    end;
+    tblCms.First;
+  end
+  else
+  begin
+    Excel1.PutStr(1, 1, '수수료처리 내역_출고자료');
+    Excel1.PutStr(2, 1, '조합명:' + tbljohap.FieldByName('j_name').AsString + '');
+
+    Excel1.PutStr(3, 1, '인출일 :' + Formatdatetime('yyyy-mm-dd', edtFs_day.Date));
+    Excel1.PutStr(3, 4, '출력자 :' + mpst_name);
+    Excel1.PutStr(3, 7, '출력일 :' + FormatDateTime('yyyy-mm-dd HH:mm:ss', now));
+
+    Excel1.PutStr(4, 1, '조합원코드');
+    Excel1.PutStr(4, 2, '조합원명');
+    Excel1.PutStr(4, 3, '금액');
+    Excel1.PutStr(4, 4, '공급일');
+    Excel1.PutStr(4, 5, '반영일');
+    Excel1.PutStr(4, 6, '연결매장조합코드');
+    Excel1.PutStr(4, 7, '연결매장명');
+    Excel1.PutStr(4, 8, '연결매장소속센터명()');
+
+    tblorders.First;
+    for i := 5 to tblorders.RecordCount + 4 do
+    begin
+      Excel1.PutStr(i, 1, '''' + tblorders.FieldByName('m_code').AsString);
+      Excel1.PutStr(i, 2, tblorders.FieldByName('m_name').AsString);
+      Excel1.PutStr(i, 3, FormatFloat('#,0', tblorders.FieldByName('cost').AsFloat));
+      Excel1.PutStr(i, 4, tblorders.FieldByName('s_day').AsString);
+      Excel1.PutStr(i, 5, tblorders.FieldByName('a_day').AsString);
+      Excel1.PutStr(i, 6, tblorders.FieldByName('j_code1').AsString);
+      Excel1.PutStr(i, 7, tblorders.FieldByName('j_name1').AsString);
+      Excel1.PutStr(i, 8, tblorders.FieldByName('c_name1').AsString + '(' + tblorders.FieldByName('c_code1').AsString + ')');
+
+      tblorders.Next;
+    end;
+    tblorders.First;
+  end;
+
+  Excel1.Disconnect;
+
+  Screen.Cursor := crDefault;
+
+  if rg1.ItemIndex = 0 then DBGrid1.DataSource := dtstblCms
+  else if rg1.ItemIndex = 1 then DBGrid1.DataSource := dtstblorders;
+
+  DbGrid1.Refresh;
+
+  Screen.Cursor := crDefault;
+end;
+
+procedure TForm1.edtorgKeyPress(Sender: TObject; var Key: Char);
+begin
+  if Key <> #13 then Exit;
+
+  SelectNext(ActiveControl, True, True);
+  Key := #0;
+end;
+
+procedure TForm1.edtjnameClick(Sender: TObject);
+begin
+  if (tblCms.Active) then tblCms.Close;
+  if (tblorders.Active) then tblorders.Close;
+  Label5.Caption := '';
+  Label6.Caption := '';
+  Label7.Caption := '';
+end;
+
+procedure TForm1.tblCmsCalcFields(DataSet: TDataSet);
+begin
+  if NoCalBool then
+    Exit;
+
+  with DataSet do
+  begin
+    //조합원명
+    FieldByName('m_name').AsString := '';
+    //if qrymembers.Locate('m_code',FieldByName('m_code').AsString,[]) then
+    //  FieldByName('m_name').AsString := qrymembers.FieldByName('m_name').AsString;
+    if tblmembership.Locate('m_code', FieldByName('m_code').AsString, []) then
+      FieldByName('m_name').AsString := tblmembership.FieldByName('m_name').AsString;
+    //c_name
+    FieldByName('c_name').AsString := '';
+    if qrycenter.Locate('c_code', FieldByName('c_code').AsString, []) then
+      FieldByName('c_name').AsString := qrycenter.FieldByName('c_name').AsString;
+
+    //j_code1 수수료부과매장연결 조합코드
+    FieldByName('j_code1').AsString := '';
+    if qrymembership.Locate('m_code', FieldByName('m_code').AsString, []) then
+      FieldByName('j_code1').AsString := qrymembership.FieldByName('maejang_code').AsString;
+
+    //j_name1 매장연결 조합명
+    FieldByName('j_name1').AsString := '';
+    FieldByName('c_code1').AsString := '';
+    if qryjohap.Locate('j_code', FieldByName('j_code1').AsString, []) then
+    begin
+      FieldByName('j_name1').AsString := qryjohap.FieldByName('j_name').AsString;
+      //j_code1 의 소속센터
+      FieldByName('c_code1').AsString := qryjohap.FieldByName('c_code').AsString;
+      //j_code1 의 소속단체
+      FieldByName('o_code').AsString := qryjohap.FieldByName('o_code').AsString;
+    end;
+
+    FieldByName('c_name1').AsString := '';
+    if qrycenter.Locate('c_code', FieldByName('c_code1').AsString, []) then
+      FieldByName('c_name1').AsString := qrycenter.FieldByName('c_name').AsString;
+
+    //bank_name
+    FieldByName('bank_name').AsString := '';
+    if qryCode.Locate('fval', FieldByName('bank').AsString, []) then
+      FieldByName('bank_name').AsString := qryCode.FieldByName('fname').AsString;
+
+    //물품대금(1),조합비(2), 기초출자금(3),증좌출자금(4), 기금(5)
+    FieldByName('kind_name').AsString := '';
+    if FieldByName('kind').AsString = '1' then
+      FieldByName('kind_name').AsString := '물품대금(1)'
+    else if FieldByName('kind').AsString = '2' then
+      FieldByName('kind_name').AsString := '조합비(2)'
+    else if FieldByName('kind').AsString = '3' then
+      FieldByName('kind_name').AsString := '기초출자금(3)';
+
+    FieldByName('r_ab_name').AsString := '';
+    if FieldByName('r_ab').AsString = 'A' then
+      FieldByName('r_ab_name').AsString := '미수신'
+    else if FieldByName('r_ab').AsString = 'B' then
+      FieldByName('r_ab_name').AsString := '수신';
+
+  end; // with~end
+end;
+
+procedure TForm1.edtFs_dayChange(Sender: TObject);
+begin
+  if (tblCms.Active) then tblCms.Close;
+  if (tblorders.Active) then tblorders.Close;
+
+  pb1.Position := 0;
+  Label5.Caption := '';
+  Label7.Caption := '';
+end;
+
+procedure TForm1.N1Click(Sender: TObject);
+var
+  Ash_ab, Ash_ab_name, AshSQL, AshSQL1, AshStr,
+    AshCash_ab, Ashm_code, Ashc_code: string;
+
+  Ashamount, AshDamt, AshEamt,
+    Ashv_amount, Ashvat: Real; //선급부가세
+  Ashchk: string;
+  Ashint: integer;
+begin
+  //개별반영
+  if mpst_code <> 'H11074064' then
+  begin
+    Showmessage('준비중입니다. 필요하신가요?? 담당자에게 연락주시기 바랍니다!!!');
+    Exit;
+  end;
+
+  if edtorg.Text = '' then Exit;
+  if edtjname.Text = '' then Exit;
+
+  if rg1.ItemIndex = 0 then //인출일
+  begin
+    if tblCms.FieldByName('r_ab').AsString <> 'B' then // 수신상태가 아니면 넘어간다
+    begin
+      showmessage('수신된 자료만 처리할 수 있습니다.!!! msg:1510');
+      Exit; ;
+    end;
+    if tblCms.FieldByName('j_code1').AsString = '' then // 연결매장코드 없으면 넘어간다
+    begin
+      showmessage('수수료부과매장연결 코드가 없으면 처리할 수 없습니다.!!! msg:1515');
+      Exit;
+    end;
+    if tblCms.FieldByName('o_code').AsString = '' then // 단체코드 없으면 넘어간다.
+    begin
+      showmessage('단체코드가 없으면 처리할수 없습니다.!!! msg:1520');
+      Exit;
+    end;
+
+    if tblCms.FieldByName('r_money').AsFloat = 0 then // 출금액이 0이면 반영하지 않음
+    begin
+      showmessage('출금액이 있는것만 반영합니다.!!! msg:1539');
+      Exit;
+    end;
+
+    Ash_ab := 'A';
+    Ash_ab_name := 'CMS'
+  end
+  else if rg1.ItemIndex = 1 then //출고일
+  begin
+    if tblorders.FieldByName('j_code1').AsString = '' then // 연결매장코드 없으면 넘어간다
+    begin
+      showmessage('수수료부과매장연결 코드가 없으면 처리할 수 없습니다.!!! msg:1531');
+      Exit;
+    end;
+    if tblorders.FieldByName('o_code').AsString = '' then // 단체코드 없으면 넘어간다.
+    begin
+      showmessage('단체코드가 없으면 처리할수 없습니다.!!! msg:1536');
+      Exit;
+    end;
+    if tblorders.FieldByName('cost').AsFloat = 0 then
+    begin
+      showmessage('출고금액이 있는것만 반영합니다.!!! msg:1560');
+      Exit;
+    end;
+    Ash_ab := 'B';
+    Ash_ab_name := '출고'
+  end;
+
+  if rg1.ItemIndex = 0 then
+    pb1.Max := tblCms.RecordCount
+  else pb1.Max := tblorders.RecordCount;
+
+  // 2012-11-09 처리당일로 now로 처리한것을 각각 출금일, 출고일로 반영해달라는 요청으로 변경함
+  // cug= 563919 28번댓글  lsj 수정
+  AshTDate := FormatDateTime('yyyy-mm-dd', edtFs_day.Date); // 계정원장 처리일
+  AshCDate := FormatDatetime('yyyy-mm-dd', edtFs_day.Date); // 계정원장 반영일
+
+  pb1.Position := 0;
+  Screen.Cursor := crHourGlass;
+
+  // 원장에 반영유무 체크하기 테이블별도로 만듦
+  AshSQL := 'select i_day,j_code,cms_orders_ab'
+    + ' from acc_yn'
+    + ' Where i_day="' + FormatDateTime('yyyy-mm-dd', edtFs_day.Date) + '"'
+    + ' and j_code="' + tbljohap.FieldByName('j_code').AsString + '"'
+    + ' and cms_orders_ab="' + Ash_ab + '"';
+  Ashchk := MySQL_Assign(db_coopbase, qrysql, ashsql, qry_imsi);
+
+  try
+    Ashint := strtoint(ashchk);
+  except
+    db_coopbase.Disconnect;
+    Showmessage('연결에러입니다. 메세지가 지속적으로 나올때 전산실로 문의바랍니다.!!! ( acc_yn ) Err : 785');
+    Screen.Cursor := crDefault;
+    Exit;
+  end;
+
+  if qry_imsi.RecordCount <> 0 then
+  begin
+    if MessageDlg('이미 계정원장에 반영된 일자 입니다!!. 이중반영될수도 있습니다. 그래도 처리하시겠습니까???', mtConfirmation, [mbNO, mbOK], 0) = mrNO then
+    begin
+      Screen.Cursor := crDefault;
+      Exit;
+    end;
+    // 그래도 처리하면 update
+    AshSQL := 'Update acc_yn'
+      + ' Set'
+      + ' etc_memo="작업자재처리함/' + Ash_ab_name + '-1건"'
+      + ',mpst_code = "' + mpst_code + '"'
+      + ',p_day = now()'
+      + ',chk_svr = "' + IntToStr(svrconn) + '"'
+      + ' Where i_day = "' + FormatDateTime('yyyy-mm-dd', edtFs_day.Date) + '"'
+      + ' and j_code = "' + tbljohap.FieldByName('j_code').AsString + '"'
+      + ' and cms_orders_ab= "' + Ash_ab + '"';
+    AshSQL1 := 'Update acc_yn'
+      + ' Set'
+      + ' etc_memo="작업자재처리함/' + Ash_ab_name + '-1건"'
+      + ',mpst_code = "' + mpst_code + '"'
+      + ',p_day = now()'
+      + ',chk_svr = "' + IntToStr(svrconn) + '"'
+      + ',history = concat(history,"' + SQLToHistory(AshSQL) + '")'
+      + ' Where i_day = "' + FormatDateTime('yyyy-mm-dd', edtFs_day.Date) + '"'
+      + ' and j_code = "' + tbljohap.FieldByName('j_code').AsString + '"'
+      + ' and cms_orders_ab= "' + Ash_ab + '"';
+    Ashchk := MySQL_UpDel(db_coopbase, qrySql, Ashsql1);
+
+    try
+      Ashint := strtoint(Ashchk);
+    except
+      db_coopbase.Disconnect;
+      Showmessage('중복저장하면서 서버연결에 실패했습니다.!!! Err : 820');
+      Screen.Cursor := crDefault;
+      Exit;
+    end;
+  end
+  else // 하나도 없으면 처리유무테이블에 인서트 하고 분개시작한다...
+  begin
+    AshSQL := 'Insert Into acc_yn'
+      + ' (i_day,j_code,cms_orders_ab,etc_memo,mpst_code,p_day,chk_svr)'
+      + ' Values'
+      + ' ("' + FormatDateTime('yyyy-mm-dd', edtFs_day.Date) + '"'
+      + ',"' + tbljohap.FieldByName('j_code').AsString + '"'
+      + ',"' + Ash_ab + '"'
+      + ',"' + Ash_ab_name + '-' + Label5.Caption + '반영"'
+      + ',"' + mpst_code + '"'
+      + ',Now()'
+      + ',"' + IntToStr(svrconn) + '")';
+    AshSQL1 := 'Insert Into acc_yn'
+      + ' (i_day,j_code,cms_orders_ab,etc_memo,mpst_code,p_day,chk_svr,history)'
+      + ' Values'
+      + ' ("' + FormatDateTime('yyyy-mm-dd', edtFs_day.Date) + '"'
+      + ',"' + tbljohap.FieldByName('j_code').AsString + '"'
+      + ',"' + Ash_ab + '"'
+      + ',"' + Ash_ab_name + '-' + Label5.Caption + '반영"'
+      + ',"' + mpst_code + '"'
+      + ',Now()'
+      + ',"' + IntToStr(svrconn) + '"'
+      + ',"' + SQLToHistory(AshSQL) + '")';
+    Ashchk := MySQL_UpDel(db_coopbase, qrysql, Ashsql1);
+
+    try
+      Ashint := strtoint(aShchk);
+    except
+      db_coopbase.Disconnect;
+      Showmessage('원장처리유무 등록시 에러!!! 전산실에 문의하세요~~ Err : 852');
+      Screen.Cursor := crDefault;
+      Exit;
+    end;
+  end;
+
+  case rg1.ItemIndex of
+    0: //CMS인출자료반영
+      begin
+        AshStr := 'CMS인출 자료 중 수신 상태이고,'
+          + #10#13
+          + #10#13
+          + '매장연결조합코드가 있는 출금액이 계정원장에 반영됩니다!!'
+          + #10#13
+          + #10#13
+          + #10#13
+          + '수수료부과매장연결코드가 없으면 반영되지 않습니다.'
+          + #10#13
+          + #10#13
+          + '한번 더 확인해 보시기 바랍니다.'
+          + #10#13
+          + #10#13
+          + '계정원장의 [처리일 과 반영일 = 출고일,출금일] 로 반영합니다.'
+          + #10#13
+          + #10#13
+          + #10#13
+          + '정말로 진행하시겠습니까???';
+        if MessageDlg(AshStr, mtConfirmation, [mbNO, mbOK], 0) = mrNO then
+        begin
+          Screen.Cursor := crDefault;
+          Exit;
+        end;
+
+        Ashm_code := tblCms.FieldByName('m_code').AsString;
+        Ashj_code := tblCms.FieldByName('j_code1').AsString; //수수료부과매장연결조합
+        Ashc_code := tblCms.FieldByName('c_code1').AsString; //소속센터
+        Asho_code := tblCms.FieldByName('o_code').AsString;
+        Ashamount := tblCms.FieldByName('r_money').AsFloat;
+
+        Dacntd := ''; Dacnte := ''; Cacntd := ''; Cacnte := '';
+        AshEamt := 0; AshDamt := 0; //과목잔액,세목잔액
+        AshCash_ab := 'A';
+                    //대체
+        //출금일때 적요
+        if tbljohap.FieldByName('j_code').AsString = '2300' then
+          Comment := '' + FormatDateTime('mm', edtFs_day.Date) + '월 CMS출금자동전표/(' + tblorg.FieldByName('o_name').AsString + ')/냉장냉동기유지보수료'
+        else if tbljohap.FieldByName('j_code').AsString = '9040' then // CMG
+          Comment := '' + FormatDateTime('mm', edtFs_day.Date) + '월 CMS출금자동전표/(' + tblorg.FieldByName('o_name').AsString + ')/포스유지보수료';
+
+        //전표번호 :I을 추가해야함.
+        Ac_num := 'I' + '-' + FormatDateTime('yyyymmdd', now())
+          + '-' + Ashj_code; // 20자리중 16자리
+
+        // account snum값
+        AshSnum := '1';
+
+        AshSQL := 'Select max(snum) as snum from account'
+          + ' Where tdate="' + AshTdate + '"'
+          + ' and j_code ="' + Ashj_code + '"'
+          + ' and o_code ="' + Asho_code + '"';
+        Ashchk := MySQL_Assign(db_coopbase, qrysql, Ashsql, qry_imsi);
+        try
+          Ashint := strtoint(Ashchk);
+        except
+          db_coopbase.Disconnect;
+          Showmessage('연결에 실패했습니다!! ( account ) Err : 942');
+          Screen.Cursor := crDefault;
+          Exit;
+        end;
+
+        if qry_imsi.RecordCount <> 0 then
+          AshSnum := intToStr(qry_imsi.fieldByname('snum').AsInteger + 1);
+
+        //cms인출은 두개 단체 차.대 가 동일함
+        Dacntd := '2415'; // 차:미지급비용
+        Dacnte := '100';
+
+        Cacntd := '2010'; // 대:제예금
+        // 2012-12-04 cug=563919 댓글30번에 의해 직영점 분리
+        if (Ashj_code = 'A067') or (Ashj_code = 'A077')
+          or (Ashj_code = 'J014') or (Ashj_code = 'J013')
+          or (Ashj_code = 'J015') // 직영관악점, 정자점, 쌍문점, 신내점, 보정점
+           // 2013-02-15 cug=563919 댓글 38번에 의해 직영 분리
+        or (Ashj_code = 'J016') or (Ashj_code = 'J017')
+          or (Ashj_code = 'J018') or (Ashj_code = 'J019') // 직영철산, 잠실, 구의, 소사
+          or (Ashj_code = '3640') or (Ashj_code = '3650')
+          or (Ashj_code = '3630') or (Ashj_code = '3620')
+          or (Ashj_code = '3660') // CUG=563919 50번댓글 광주전남회계조합
+          or (Ashj_code = '3670') or (Ashj_code = '3680') // 2013-11-07  CUG=563919 53번 답글 풍암 추가
+                                                                        // 2014-01-08 CUG=563919  61번 답글 로 3680월계점 추가
+        or (Ashj_code = 'J021') or (Ashj_code = 'J022')
+          or (Ashj_code = '4046') or (Ashj_code = '42A0') //CUG(563919) - 댓글 68 쿱스토어울산삼산점  [4060] - 2014-05-09 수정
+        //2014-05-17 42A0(쿱스토어부산센터조합)..
+          //2014-05-20 CUG(563919) -댓글 81번 요청에 의해 반영
+        or (Ashj_code = '42A5') or (Ashj_code = '42A9')
+          or (Ashj_code = '42A8') or (Ashj_code = '42A2')
+          or (Ashj_code = '42A3') or (Ashj_code = '42A6')
+          or (Ashj_code = '42A1') or (Ashj_code = '42A7')
+          or (Ashj_code = '4010') or (Ashj_code = '4020')
+          or (Ashj_code = '4030') or (Ashj_code = '4040')
+          or (Ashj_code = '4050') or (Ashj_code = '4060')
+            //2014-05-20 END
+             //CUG(563919)-97번 2015-06-01 김현호님 요청
+        or (Ashj_code = 'J026')
+          //CUG(563919)-97번 2015-06-01 김현호님 요청 END
+        then // 2014-03-06 CUG=563919 66번 답글 로  쿱스토어대치점,쿱스토어서울랜드 lsj추가함
+          Cacnte := '101'
+        else if (Ashj_code = 'A060') then // 직영분당이매점
+          Cacnte := '401'
+         //2014-12-09 CUG(563919)-83 START
+        else if (Ashj_code = 'C002') then
+          Cacnte := '100'
+         //2014-12-09 CUG(563919)-83 END
+        else
+          Cacnte := '201';
+        // 2012-12-04 cug=563919 댓글30번에 의해 직영점 분리 끝!
+
+        //**원장반영
+        SaveAcc('D', Dacntd, Dacnte, Ashj_code, Comment, Ashamount, AshDamt, AshEamt, AshCDate, AshCash_ab, Ac_num);
+        SaveAcc('C', Cacntd, Cacnte, Ashj_code, Comment, Ashamount, AshDamt, AshEamt, AshCDate, AshCash_ab, Ac_num);
+
+      end;
+
+    1: //출고자료 반영
+      begin
+        AshStr := '출고 자료 자동전표 발생합니다...'
+          + #10#13
+          + #10#13
+          + '매장연결조합코드가 있고, 출고액이 있는것만 계정원장에 반영됩니다!!'
+          + #10#13
+          + #10#13
+          + #10#13
+          + '수수료부과매장연결코드가 없으면 반영되지 않습니다.'
+          + #10#13
+          + #10#13
+          + '한번 더 확인해 보시기 바랍니다.'
+          + #10#13
+          + #10#13
+          + '계정원장의 처리일과 반영일은 처리하는 당일로 반영합니다.'
+          + #10#13
+          + #10#13
+          + #10#13
+          + '정말로 진행하시겠습니까???';
+        if MessageDlg(AshStr, mtConfirmation, [mbNO, mbOK], 0) = mrNO then
+        begin
+          Screen.Cursor := crDefault;
+          Exit;
+        end;
+
+        Ashvat := 0; Ashv_amount := 0; Ashamount := 0;
+        pb1.Position := pb1.Position + 1;
+        pb1.Refresh;
+
+        Ashm_code := tblorders.FieldByName('m_code').AsString;
+        Ashj_code := tblorders.FieldByName('j_code1').AsString; //소속조합
+        Ashc_code := tblorders.FieldByName('c_code1').AsString; //소속센터
+        Asho_code := tblorders.FieldByName('o_code').AsString;
+        Ashamount := tblorders.FieldByName('cost').AsFloat; //미지급비용
+
+        Ashv_amount := Round(Ashamount / 1.1); //지급수수료
+        Ashvat := Ashamount - Ashv_amount; //선급부가세
+
+        Dacntd := ''; Dacnte := ''; Cacntd := ''; Cacnte := '';
+        AshEamt := 0; AshDamt := 0; //과목잔액,세목잔액
+
+        AshCash_ab := 'A'; //대체
+
+        //출고일때 적요
+        if tbljohap.FieldByName('j_code').AsString = '2300' then
+          Comment := tblorg.FieldByName('o_name').AsString + '' + FormatDateTime('mm', edtFs_day.Date) + '월 냉장냉동기유지보수료 자동전표'
+        else if tbljohap.FieldByName('j_code').AsString = '9040' then // CMG
+          Comment := tblorg.FieldByName('o_name').AsString + '' + FormatDateTime('mm', edtFs_day.Date) + '월 포스유지보수료 자동전표';
+
+        //전표번호 :I을 추가해야함.
+        Ac_num := 'I' + '-' + FormatDateTime('yyyymmdd', now())
+          + '-' + Ashj_code; // 20자리중 16자리
+
+        // account snum값
+        AshSnum := '1';
+
+        AshSQL := 'Select max(snum) as snum'
+          + ' from account'
+          + ' Where tdate="' + AshTdate + '"'
+          + ' and j_code ="' + Ashj_code + '"'
+          + ' and o_code ="' + Asho_code + '"';
+        Ashchk := MySQL_Assign(db_coopbase, qrysql, ashsql, qry_imsi);
+
+        try
+          Ashint := strtoint(ashchk);
+        except
+          db_coopbase.Disconnect;
+          Showmessage('연결에 실패했습니다!! ( account ) Err : 1041');
+          Screen.Cursor := crDefault;
+          Exit;
+        end;
+
+        if qry_imsi.RecordCount <> 0 then
+          AshSnum := intToStr(qry_imsi.fieldByname('snum').AsInteger + 1);
+
+        // 출고는 두개 단체 차변계정세목이 틀림
+        if tbljohap.FieldByName('j_code').AsString = '2300' then //쿱냉동
+        begin
+          Dacntd := '1765'; // 차:지급수수료-냉장냉동유지보수
+          Dacnte := '200';
+        end
+        else if tbljohap.FieldByName('j_code').AsString = '9040' then // CMG
+        begin
+          // 2014-01-08 CUG=563919 60번 답글
+          if (Ashm_code = 'X12120004') or (Ashm_code = 'X13070003')
+            or (Ashm_code = 'X12070005') or (Ashm_code = 'X13100019')
+            or (Ashm_code = 'X12120018') // 구의,대치,보정,서울랜,소사
+            or (Ashm_code = 'X12050003') or (Ashm_code = 'X12050005')
+            or (Ashm_code = 'X12100007')
+            //2015-06-22 CUG(563919)-100 김현호님 요청 START
+          or (Ashm_code = 'X15020001')
+            //2015-06-22 CUG(563919)-100 김현호님 요청 END
+          then // 신내,쌍문,잠실
+          begin
+            Dacntd := '1765'; // 차:
+            Dacnte := '112';
+          end
+          else if (Ashm_code = 'X12030005') then //행복한밥상
+          begin
+            Dacntd := '1765'; // 차:
+            Dacnte := '919';
+          end
+          // 2014-01-08 End
+          else
+          begin
+            Dacntd := '1765'; // 차:지급수수료-포스유지관리
+            Dacnte := '119';
+          end;
+
+        end;
+        //**차변 원장반영1
+        //지급수수료 변수명으로 넘김
+        Ashamount := Ashv_amount;
+        SaveAcc('D', Dacntd, Dacnte, Ashj_code, Comment, Ashamount, AshDamt, AshEamt, AshCDate, AshCash_ab, Ac_num);
+
+        //** 차변 원장반영2
+        //차변동일하게 선급부가세 발생.
+        Dacntd := '2065';
+        Dacnte := '100';
+        Ashamount := Ashvat;
+        SaveAcc('D', Dacntd, Dacnte, Ashj_code, Comment, Ashamount, AshDamt, AshEamt, AshCDate, AshCash_ab, Ac_num);
+
+        ////////////////// // 대변은 같음
+        Cacntd := '2415'; // 대:미지급비용
+        Cacnte := '100';
+        //**대변 원장반영
+        Ashamount := tblorders.FieldByName('cost').AsFloat;
+        SaveAcc('C', Cacntd, Cacnte, Ashj_code, Comment, Ashamount, AshDamt, AshEamt, AshCDate, AshCash_ab, Ac_num);
+
+      end;
+  end; //case ~ end
+
+  Showmessage('껀별 반영하였습니다!! 계정원장 확인하세요~~~');
+  Screen.Cursor := crDefault;
+  db_coopbase.Disconnect;
+end;
+
+procedure TForm1.rg1Click(Sender: TObject);
+begin
+  if tblcms.Active then
+    tblcms.Close;
+  if tblorders.Active then
+    tblorders.Close;
+
+  Label5.Caption := '';
+  Label6.Caption := '';
+  Label7.Caption := '';
+
+  case rg1.ItemIndex of
+    0: //cms인출일
+      begin
+        Label3.Caption := '인출일';
+        Label6.Caption := '';
+
+        DBGrid1.Columns[0].Title.Caption := '조합원코드';
+        DBGrid1.Columns[1].Title.Caption := '조합원명';
+        DBGrid1.Columns[2].Title.Caption := '신청액';
+        DBGrid1.Columns[3].Title.Caption := '출금액';
+        DBGrid1.Columns[4].Title.Caption := '수수료부과매장명';
+        DBGrid1.Columns[5].Title.Caption := '수수료부과매장코드';
+        DBGrid1.Columns[6].Title.Caption := '수수료부과매장소속센터명';
+        DBGrid1.Columns[7].Title.Caption := '출금종류';
+        DBGrid1.Columns[8].Title.Caption := '은행코드';
+        DBGrid1.Columns[9].Title.Caption := '은행명';
+        DBGrid1.Columns[10].Title.Caption := '수신여부';
+        DBGrid1.Columns[11].Title.Caption := '';
+        DBGrid1.Columns[12].Title.Caption := '';
+
+        DBGrid1.Columns[0].FieldName := 'm_code';
+        DBGrid1.Columns[1].FieldName := 'm_name';
+        DBGrid1.Columns[2].FieldName := 's_money';
+        DBGrid1.Columns[3].FieldName := 'r_money';
+        DBGrid1.Columns[4].FieldName := 'j_name1';
+        DBGrid1.Columns[5].FieldName := 'j_code1';
+        DBGrid1.Columns[6].FieldName := 'c_name1';
+        DBGrid1.Columns[7].FieldName := 'kind_name';
+        DBGrid1.Columns[8].FieldName := 'bank';
+        DBGrid1.Columns[9].FieldName := 'bank_name';
+        DBGrid1.Columns[10].FieldName := 'r_ab_name';
+        DBGrid1.Columns[11].FieldName := 'c_code1';
+        DBGrid1.Columns[12].FieldName := 'o_code';
+
+      end;
+    1: //출고일
+      begin
+        Label3.Caption := '출고일';
+        if org_code = 'A049' then
+          Label6.Caption := '물품명 : POS유지보수_멀티매장(10003CD100),복합매장(10002CD100),일반매장(10001CD100)'
+        else if org_code = '0023' then
+          Label6.Caption := '물품명 : A/S*유지보수(0000200000)';
+
+        DBGrid1.Columns[0].Title.Caption := '조합원코드';
+        DBGrid1.Columns[1].Title.Caption := '조합원명';
+        DBGrid1.Columns[2].Title.Caption := '출고금액';
+        DBGrid1.Columns[3].Title.Caption := '수수료부과매장명'; //m_code,g_code,s_day,a_day,c_code,cost
+        DBGrid1.Columns[4].Title.Caption := '수수료부과매장코드';
+        DBGrid1.Columns[5].Title.Caption := '수수료부과매장소속센터명';
+        DBGrid1.Columns[6].Title.Caption := '공급일';
+        DBGrid1.Columns[7].Title.Caption := '반영일';
+        DBGrid1.Columns[8].Title.Caption := '물품코드';
+        DBGrid1.Columns[9].Title.Caption := '';
+        DBGrid1.Columns[10].Title.Caption := '';
+        DBGrid1.Columns[11].Title.Caption := '';
+        DBGrid1.Columns[12].Title.Caption := '';
+
+        DBGrid1.Columns[0].FieldName := 'm_code';
+        DBGrid1.Columns[1].FieldName := 'm_name';
+        DBGrid1.Columns[2].FieldName := 'cost';
+        DBGrid1.Columns[3].FieldName := 'j_name1'; //수수료부과매장명
+        DBGrid1.Columns[4].FieldName := 'j_code1'; //수수료부과매장코드
+        DBGrid1.Columns[5].FieldName := 'c_name1'; //수수료부과매장 소속센터명
+        DBGrid1.Columns[6].FieldName := 's_day';
+        DBGrid1.Columns[7].FieldName := 'a_day';
+        DBGrid1.Columns[8].FieldName := 'g_code';
+        DBGrid1.Columns[9].FieldName := 'c_code1'; //수수료부과매장 소속센터코드
+        DBGrid1.Columns[10].FieldName := 'o_code';
+        DBGrid1.Columns[11].FieldName := '';
+        DBGrid1.Columns[12].FieldName := '';
+
+      end;
+
+
+  end;
+
+end;
+
+procedure TForm1.tblordersCalcFields(DataSet: TDataSet);
+begin
+  if NoCalBool then
+    Exit;
+
+  with DataSet do
+  begin
+    //조합원명
+    FieldByName('m_name').AsString := '';
+    if qrymembers.Locate('m_code', FieldByName('m_code').AsString, []) then
+      FieldByName('m_name').AsString := qrymembers.FieldByName('m_name').AsString;
+
+    //c_name                FieldByName('c_name').AsString := '';
+//    if qrycenter.Locate('c_code',FieldByName('c_code').AsString,[]) then
+//      FieldByName('c_name').AsString := qrycenter.FieldByName('c_name').AsString;
+
+    //j_code1 수수료부과매장연결 조합코드
+    FieldByName('j_code1').AsString := '';
+    if qrymembership.Locate('m_code', FieldByName('m_code').AsString, []) then
+      FieldByName('j_code1').AsString := qrymembership.FieldByName('maejang_code').AsString;
+
+    //j_name1 매장연결 조합명
+    FieldByName('j_name1').AsString := '';
+    FieldByName('c_code1').AsString := '';
+    FieldByName('o_code').AsString := '';
+    if qryjohap.Locate('j_code', FieldByName('j_code1').AsString, []) then
+    begin
+      FieldByName('j_name1').AsString := qryjohap.FieldByName('j_name').AsString;
+      //j_code1 의 소속센터
+      FieldByName('c_code1').AsString := qryjohap.FieldByName('c_code').AsString;
+      //j_code1 의 소속단체
+      FieldByName('o_code').AsString := qryjohap.FieldByName('o_code').AsString;
+    end;
+    //수수료부과매장조합의 소속센터명
+    FieldByName('c_name1').AsString := '';
+    if qrycenter.Locate('c_code', FieldByName('c_code1').AsString, []) then
+      FieldByName('c_name1').AsString := qrycenter.FieldByName('c_name').AsString;
+
+  end; // with~end
+end;
+
+procedure TForm1.chk1Click(Sender: TObject);
+begin
+  if tblcms.Active then
+    tblcms.Close;
+  if tblorders.Active then
+    tblorders.Close;
+end;
+
+procedure TForm1.BitBtn1Click(Sender: TObject);
+begin
+  //수수료부과매장 조회하기
+  // 설정방법은 cug=514644 의 박종우 팀장님의 10번 댓글임.
+  with TForm2.Create(Form1) do
+  begin
+    if ShowModal = mrOK then
+    begin
+
+
+    end;
+
+    Free;
+  end; //with~end
+
+  db_coopbase.Disconnect;
+end;
+
+end.
+

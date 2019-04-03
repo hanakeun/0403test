@@ -1,0 +1,188 @@
+object fmSearchPost: TfmSearchPost
+  Left = 737
+  Top = 111
+  BorderStyle = bsSingle
+  Caption = #48512#49436#44160#49353
+  ClientHeight = 562
+  ClientWidth = 434
+  Color = clBtnFace
+  Font.Charset = ANSI_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -13
+  Font.Name = #44404#47548
+  Font.Style = []
+  FormStyle = fsStayOnTop
+  KeyPreview = True
+  OldCreateOrder = False
+  Position = poMainFormCenter
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
+  PixelsPerInch = 96
+  TextHeight = 13
+  object ToolBar1: TToolBar
+    Left = 0
+    Top = 0
+    Width = 434
+    Height = 29
+    ButtonHeight = 21
+    ButtonWidth = 57
+    Caption = 'ToolBar1'
+    EdgeBorders = [ebTop, ebBottom]
+    ShowCaptions = True
+    TabOrder = 0
+    object btnInquiry: TToolButton
+      Left = 0
+      Top = 2
+      Caption = #51312#54924'(F9)'
+      ImageIndex = 0
+      OnClick = btnInquiryClick
+    end
+    object btnClose: TToolButton
+      Left = 57
+      Top = 2
+      Caption = #51333#47308
+      ImageIndex = 2
+      OnClick = btnCloseClick
+    end
+  end
+  object gb_cd_save: TGroupBox
+    Left = 1
+    Top = 32
+    Width = 432
+    Height = 53
+    TabOrder = 1
+    object Image1: TImage
+      Left = 11
+      Top = 26
+      Width = 6
+      Height = 6
+      Picture.Data = {
+        07544269746D6170AE000000424DAE0000000000000036000000280000000600
+        000006000000010018000000000078000000C40E0000C40E0000000000000000
+        0000FBEED1F2C25BF2C25BF2C25BF2C25BFCF2DC0000DAA92EDAA92EDAA92EDA
+        A92EDAA92EDCAE3A0000CD9C16CD9C16CD9C16CD9C16CD9C16D0A2240000D7A5
+        32D7A532D7A532D7A532D7A532D9AA3E0000DAA93DDAA93DDAA93DDAA93DDAA9
+        3DDCAE480000F3E1BEDEAE4EDEAE4EDEAE4EDEAE4EF6E9CF0000}
+    end
+    object Label3: TLabel
+      Left = 22
+      Top = 23
+      Width = 26
+      Height = 13
+      Caption = #48512#49436
+    end
+    object edtPost: TEdit
+      Left = 54
+      Top = 19
+      Width = 180
+      Height = 21
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -13
+      Font.Name = #44404#47548
+      Font.Style = []
+      ImeMode = imSHanguel
+      ImeName = 'Microsoft IME 2010'
+      ParentFont = False
+      TabOrder = 0
+      OnKeyPress = edtPostKeyPress
+    end
+  end
+  object grdPost: TDBGrid
+    Left = 1
+    Top = 92
+    Width = 431
+    Height = 449
+    BiDiMode = bdLeftToRight
+    DataSource = dsSearchPost
+    Font.Charset = HANGEUL_CHARSET
+    Font.Color = clBlack
+    Font.Height = -13
+    Font.Name = #44404#47548
+    Font.Style = []
+    ImeMode = imSHanguel
+    ImeName = 'Microsoft IME 2010'
+    Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgConfirmDelete, dgCancelOnExit]
+    ParentBiDiMode = False
+    ParentFont = False
+    TabOrder = 2
+    TitleFont.Charset = ANSI_CHARSET
+    TitleFont.Color = clWhite
+    TitleFont.Height = 13
+    TitleFont.Name = #44404#47548
+    TitleFont.Style = []
+    OnDrawColumnCell = grdPostDrawColumnCell
+    OnDblClick = grdPostDblClick
+    OnTitleClick = grdPostTitleClick
+    Columns = <
+      item
+        Alignment = taCenter
+        Color = 16774118
+        Expanded = False
+        FieldName = 'no'
+        Title.Alignment = taCenter
+        Title.Caption = 'No'
+        Title.Color = 12550192
+        Width = 35
+        Visible = True
+      end
+      item
+        Color = 16774118
+        Expanded = False
+        FieldName = 'post_code'
+        Title.Alignment = taCenter
+        Title.Caption = #48512#49436#53076#46300
+        Title.Color = 12550192
+        Width = 75
+        Visible = True
+      end
+      item
+        Color = 16774118
+        Expanded = False
+        FieldName = 'post_name'
+        Title.Alignment = taCenter
+        Title.Caption = #48512#49436#47749
+        Title.Color = 12550192
+        Width = 170
+        Visible = True
+      end
+      item
+        Color = 16774118
+        Expanded = False
+        FieldName = 'mng_name'
+        Title.Alignment = taCenter
+        Title.Caption = #44288#47532#48512#49436
+        Title.Color = 12550192
+        Width = 150
+        Visible = True
+      end>
+  end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Top = 543
+    Width = 434
+    Height = 19
+    Panels = <
+      item
+        Text = 'F1-'#46020#50880#47568', F9-'#51312#54924
+        Width = 50
+      end>
+    SimplePanel = False
+  end
+  object vtSearchPost: TVirtualTable
+    Left = 37
+    Top = 480
+    Data = {02000000000000000000}
+  end
+  object dsSearchPost: TDataSource
+    DataSet = vtSearchPost
+    Left = 104
+    Top = 480
+  end
+  object vtPost: TVirtualTable
+    Left = 36
+    Top = 426
+    Data = {02000000000000000000}
+  end
+end

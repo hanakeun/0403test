@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2018/03/09 16:52:22.000.313,=C:\Users\USER\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2018/03/09 17:09:50.000.221,D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\Unit1.pas=C:\Users\USER\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2018/03/09 17:09:50.000.221,D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\Unit1.dfm=C:\Users\USER\Documents\Embarcadero\Studio\Projects\Unit1.dfm</Transaction>
+    <Transaction>2018/03/09 17:11:21.000.862,=D:\프로젝트_생협업그레이드\coophr_utils\coophr_utils.pas</Transaction>
+    <Transaction>2018/03/09 17:14:28.000.324,D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\test_yilg.dproj=C:\Users\USER\Documents\Embarcadero\Studio\Projects\Project1.dproj</Transaction>
+    <Transaction>2018/06/15 15:57:01.000.088,D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\hr_job_code.dproj=D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\test_yilg.dproj</Transaction>
+    <Transaction>2018/06/15 15:57:01.000.111,D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\test_yilg.dproj=D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\hr_job_code.dproj</Transaction>
+    <Transaction>2018/06/15 15:57:20.000.947,D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\hr_job_code.dproj=D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\test_yilg.dproj</Transaction>
+    <Transaction>2018/06/15 15:57:20.000.962,D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\test_yilg.dproj=D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\hr_job_code.dproj</Transaction>
+    <Transaction>2018/06/15 15:58:12.000.315,D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\hr_job_code.dproj=D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\test_yilg.dproj</Transaction>
+    <Transaction>2018/06/15 15:58:12.000.331,D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\test_yilg.dproj=D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\hr_job_code.dproj</Transaction>
+    <Transaction>2018/06/15 16:01:16.000.432,D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\test_yilg.dproj=D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\hr_job_code.dproj</Transaction>
+  </Transactions>
+</BorlandProject>

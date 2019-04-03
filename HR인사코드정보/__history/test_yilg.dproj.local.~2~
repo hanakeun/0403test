@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2018/03/08 10:50:16.000.733,=C:\Users\USER\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2018/03/08 13:38:42.000.833,=C:\Users\USER\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2018/03/08 13:49:43.000.055,=C:\Users\USER\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2018/03/08 13:50:54.000.641,C:\Users\USER\Documents\Embarcadero\Studio\Projects\Unit1.pas=D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\Unit1.pas</Transaction>
+    <Transaction>2018/03/08 13:50:54.000.641,C:\Users\USER\Documents\Embarcadero\Studio\Projects\Unit1.dfm=D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\Unit1.dfm</Transaction>
+    <Transaction>2018/03/08 13:52:58.000.728,C:\Users\USER\Documents\Embarcadero\Studio\Projects\Project1.dproj=D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\Project1.dproj</Transaction>
+    <Transaction>2018/03/08 13:54:43.000.233,D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\test_yilg.dproj=D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\Project1.dproj</Transaction>
+    <Transaction>2018/03/08 14:00:39.000.837,=D:\프로젝트_생협업그레이드\coophr_utils\coophr_utils.pas</Transaction>
+  </Transactions>
+</BorlandProject>

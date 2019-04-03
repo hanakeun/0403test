@@ -1,0 +1,795 @@
+unit coophr_utils;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Controls, Forms,
+  Dialogs, StdCtrls, ZConnection, ZDataset, DBGrids, Graphics, Grids,
+  ComCtrls, Buttons, VirtualTable, Mask, CheckLst, DateUtils, cxCurrencyEdit,
+  cxDBLookupComboBox, cxCheckComboBox, cxCheckBox, cxLookAndFeelPainters,
+  cxGridTableView, cxGridCustomTableView, cxDropDownEdit, cxCheckListBox, cxRadioGroup,
+  cxControls, cxTL, cxDBTL, AnsiStrings;
+
+// coop_utils
+//초기화면 위치 설정
+procedure Set_MainPosition(app_main: TForm);
+
+// 쿼리를 이력 저장형식으로 변환
+function SQLToHistory(my_sql: String): String;
+
+// *****************************************************************************
+// split - 문자열 구분자로 나눠서 원하는 위치(순서)의 문자 가져오기
+{ Str       : 문자열
+  Position  : 순서
+  Delimiter : 구분자
+}
+function subStr(str: String; const position: Integer = 1; const delimiter: string = ' '): String;
+function splitCd(str: String; const position: Integer = 1; const delimiter: string = ' '): string;
+
+// 화면모드별 입력 컴포넌트 속성 변경
+{ obj : 컴포넌트명
+  mode: 화면모드(0:보기, 1:등록, 2: 수정, 3:삭제)
+  e   : 필수값여부(0:비필수, 1:필수, 2:비활성)
+}
+procedure setObjEnable(const obj: TComponent; mode: Integer; e: Integer = 0);
+
+
+// 콤보박스에서 선택한 콤보text에서 코드만 가져오기
+function getCommCodeVal(cb: TWinControl): String;
+//function getCommCodeVal(cb: TcxComboBox): String; overload;
+//function getCommCodeVal(ckl: TCheckListBox): String; overload;
+
+// 콤보박스에서 code 매칭 index 가져오기
+function getMatchCodeIdx(code: String; cbNm: TComboBox):Integer; overload;
+
+// 콤보박스에서 code 매칭 value 가져오기
+function getMatchCodeVal(code: String; cbNm: TComboBox):String;
+
+// 사용자 프로그램의 법인별 사업장별 부서별 등록, 수정, 출력, 급여정보열람 권한
+procedure setGroupRightYn(obpAb: String = ''; obpCode: String = '');
+
+// true, false -> Y, N 으로 치환 (체크박스, 라디오버튼의 checked 변환 시 사용)
+function getYn(bool: Boolean): String; overload;
+function getYn(str: string): String; overload;
+
+// Y, N -> true, false 로 치환
+function getBool(yn: String): Boolean;
+
+// 삭제확인창 메세지
+function confirmDelMsg(msg: String = ''): Integer;
+function chkExtVal(obj: TComponent; lab: String): Boolean;
+// 문자열 null 확인
+function isEmpty(str: String): Boolean;
+
+// 개발자 테스트 컨트롤 보임
+//procedure showCtrl(ctrl: TControl);
+
+// TcxLookupComboBox 공통코드 설정
+
+implementation
+
+uses coop_sql_updel, Unit1, DB;
+
+type
+  TADBGrid = class(TDBGrid);
+
+// 에러메세지
+const
+  MSG_ERR_CD1         = '선택 가능 항목이 없습니다.';                 // 공통코드 에러메세지1
+  MSG_ERR_VAL1        = ' 항목은 필수값입니다.';                      // 유효성확인1
+  MSG_ERR_VAL2        = ' 항목은 필수선택값입니다.';                  // 유효성확인2
+  MSG_ERR_VAL_DATE1   = '일자 형식이 맞지않습니다.';                  // 날짜유효성확인1
+  MSG_ERR_VAL_DATE2   = '입력기간의 시작일자가 종료일자보다 큽니다.'; // 날짜유효성확인2
+  MSG_ERR_MATCH_OCODE = '해당 법인정보의 ERP단체코드를 확인하세요.';  // 법인코드, ERP단체코드 매칭오류
+  MSG_NO_DATA         = '조회 결과가 없습니다.';
+
+
+// 초기화면 위치 설정
+procedure Set_MainPosition(app_main: TForm);
+begin
+ if (Screen.Width - app_main.Width) >= 0 then
+  begin
+    app_main.Left := (Screen.Width - app_main.Width) div 2;
+    app_main.Top  := 0;
+  end
+ else
+   app_main.Position := poScreenCenter;
+end;
+
+// 문자열 null 확인
+function isEmpty(str: String): Boolean;
+begin
+  if (Trim(str) = '') or (Length(Trim(str)) = 0) then
+    result := False
+  else
+    result := True;
+end;
+
+// 필수입력항목 확인
+{ obj: 필수입력컴포넌트명
+  lab: 필수입력항목 label
+}
+function chkExtVal(obj: TComponent; lab: String): Boolean;
+begin
+  if obj is TEdit then
+  begin
+    if not isEmpty(Trim(TEdit(obj).Text)) then
+    begin
+      ShowMessage(lab + MSG_ERR_VAL1);
+      TEdit(obj).SetFocus;
+      Result := False;
+    end
+    else Result := True;
+  end
+  else if obj is TMaskEdit then
+  begin
+    if not isEmpty(Trim(TMaskEdit(obj).Text)) then
+    begin
+      ShowMessage(lab + MSG_ERR_VAL1);
+      TMaskEdit(obj).SetFocus;
+      Result := False;
+    end
+    else Result := True;
+  end
+  else if obj is TComboBox then
+  begin
+    if (TComboBox(obj).ItemIndex = 0)
+      and ((Pos('선택', TComboBox(obj).Items[0]) > 0) or (TComboBox(obj).Items[0] = '전체')) then
+    begin
+      ShowMessage(lab + MSG_ERR_VAL2);
+      TComboBox(obj).SetFocus;
+      SendMessage(TComboBox(obj).Handle, CB_SHOWDROPDOWN, Integer(True), 0);
+      Result := False;
+    end
+    else Result := True;
+  end
+  else if obj is TcxComboBox then
+  begin
+    if TcxComboBox(obj).ItemIndex < 1 then
+    begin
+      ShowMessage(lab + MSG_ERR_VAL2);
+      TcxComboBox(obj).SetFocus;
+      SendMessage(TcxComboBox(obj).Handle, CB_SHOWDROPDOWN, Integer(true), 0);
+      Result := False;
+    end
+    else Result := True;
+  end
+  else if obj is TcxLookupComboBox then
+  begin
+    if TcxLookupComboBox(obj).ItemIndex < 1 then
+    begin
+      ShowMessage(lab + MSG_ERR_VAL2);
+      TComboBox(obj).SetFocus;
+      Result := False;
+    end
+    else Result := True;
+  end
+  else if obj is TcxCurrencyEdit then
+  begin
+    if TcxCurrencyEdit(obj).Value = 0 then
+    begin
+      ShowMessage(lab + MSG_ERR_VAL1);
+      TcxCurrencyEdit(obj).SetFocus;
+      Result := False;
+    end
+    else Result := True;
+  end
+  else if obj is TDateTimePicker then
+  begin
+    if DateToStr(TDateTimePicker(obj).Date) = '1900/01/01' then // 디폴트값 변경 확인
+    begin
+      ShowMessage(lab + ' 일자를 확인하세요.');
+      TDateTimePicker(obj).SetFocus;
+      Result := False;
+    end
+    else Result := True;
+  end
+  {
+  else if obj is TCheckListBox then
+  begin
+    if getCklChkCnt(TCheckListBox(obj)) = 0 then
+    begin
+      ShowMessage(lab + MSG_ERR_VAL2);
+      TCheckListBox(obj).SetFocus;
+      Result := False;
+    end
+    else Result := True;
+  end
+  else Result := True;
+  }
+end;
+
+// 쿼리를 이력 저장형식으로 변환
+function SQLToHistory(my_sql: String): String;
+var
+  AshStr: String;
+  AshPosInt: Integer;
+begin
+  my_sql := Trim(my_sql);
+  AshStr := UpperCase(my_sql);
+  while Pos('NOW()',AshStr) <> 0 do
+  begin
+    AshPosInt:= Pos('NOW()',AshStr);
+    System.Delete(my_sql,AshPosInt,5);
+    System.Insert('"'+FormatDateTime('yyyy-mm-dd hh:mm:ss',Now)+'"',my_sql,AshPosInt);
+    AshStr := UpperCase(my_sql);
+  end;
+
+  while (Pos('"',my_sql) <> 0) OR (Pos('''',my_sql) <> 0) do
+  begin
+    AshPosInt := Pos('"',my_sql);
+    if AshPosInt = 0 then
+      AshPosInt := Pos('''',my_sql);
+    System.Delete(my_sql,AshPosInt,1);
+    System.Insert('∬', my_sql,AshPosInt);
+  end;
+
+  my_sql := mpst_name+'['+mpst_code+']-('+FormatDateTime('yyyy-mm-dd hh:mm:ss', Now)+')'+#13#10+my_sql+#13#10;
+  Result := my_sql;
+end;
+
+
+// 그리드 타이틀 클릭 시 정렬
+{
+ 1. 전역변수 선언
+      colIdx: Integer; titleCaption: String;
+
+ 2. 조회 시 정렬초기화
+      vt.IndexFieldNames := '';
+      grid.Columns[colIdx].Title.Caption := titleCaption;
+
+ 3. OnTitleClick 이벤트에서 함수 호출
+      sortGrid(colIdx, titleCaption, Column);
+}
+{
+// 개발자 컨트롤 visible
+procedure showCtrl(ctrl: TControl);                                                              // 2018010038 - 윤일근
+begin                                                                                            // 2016060060 - 최슬기
+  if (mpst_code = '0579033000') or (mpst_code = '2016060060') or (mpst_code = '2018010038') then // 0579033000 - 정송
+  begin
+    if ctrl.Visible then
+      ctrl.Visible := false
+    else
+      ctrl.Visible := True;
+  end
+  else
+    ctrl.Visible := false;
+end;
+}
+
+
+// 사용자 프로그램의 법인별 사업장별 부서별 등록, 수정, 출력 권한
+// obpAb: 'O'-법인, 'B'-사업장, 'P'-부서, 'A'-하나 이상의 법인 권한 있으면 권한부여
+// 2014.03.12 법인별 급여정보허용여부 권한 추가 hr_salary_ab(A:확인불가 B:허용)
+procedure setGroupRightYn(obpAb: String = ''; obpCode: String = '');
+begin
+  insertYn := 'N'; editYn := 'N'; printYn := 'N'; salaryAb := 'A';
+
+  // 단체전체권한 - hr_obp_ab:A 또는 hr_obp_code:9999
+  // 법인별 사업장별 부서별 권한 세분화가 필요없는 프로그램 또는 수퍼단체권한 사용자
+  {if Form1.vtSuStaff.FieldByName('hr_obp_ab').AsString = 'A' then
+  //if Form1.vtSuStaff.FieldByName('hr_obp_code').AsString = '9999' then
+  begin
+    insertYn := Form1.vtSuStaff.FieldByName('hr_insert').AsString;
+    editYn   := Form1.vtSuStaff.FieldByName('hr_edit').AsString;
+    printYn  := Form1.vtSuStaff.FieldByName('hr_print').AsString;
+  end
+  }
+  if obpAb = 'A' then
+  begin
+    if Form1.vtSuStaff.Locate('hr_insert', 'Y', []) then insertYn := 'Y' else insertYn := 'N';
+    if Form1.vtSuStaff.Locate('hr_edit', 'Y', []) then editYn := 'Y' else editYn := 'N';
+    if Form1.vtSuStaff.Locate('hr_print', 'Y', []) then printYn := 'Y' else printYn  := 'N';
+    if Form1.vtSuStaff.Locate('hr_salary_ab', 'B', []) then salaryAb := 'B' else salaryAb  := 'A';
+  end
+  else
+  begin
+    if obpAb = '' then // FormCreate 시 (법인, 사업장, 부서 미선택)
+    begin
+      if Form1.vtSuStaff.Locate('hr_insert', 'N', []) then insertYn := 'N' else insertYn := 'Y';
+      if Form1.vtSuStaff.Locate('hr_edit', 'N', []) then editYn := 'N' else editYn := 'Y';
+      if Form1.vtSuStaff.Locate('hr_print', 'N', []) then printYn := 'N' else printYn  := 'Y';
+      if Form1.vtSuStaff.Locate('hr_salary_ab', 'A', []) then salaryAb := 'A' else salaryAb  := 'B';
+    end
+
+    // 법인, 사업장, 부서 컴포넌트 초기화 시
+    else if (obpAb <> '') and (obpCode = '') then
+    begin
+      if Form1.vtSuStaff.Locate('hr_obp_ab;hr_insert', VarArrayOf([obpAb, 'N']), []) then insertYn := 'N' else insertYn := 'Y';
+      if Form1.vtSuStaff.Locate('hr_obp_ab;hr_edit', VarArrayOf([obpAb, 'N']), []) then editYn := 'N' else editYn := 'Y';
+      if Form1.vtSuStaff.Locate('hr_obp_ab;hr_print', VarArrayOf([obpAb, 'N']), []) then printYn := 'N' else printYn  := 'Y';
+      if Form1.vtSuStaff.Locate('hr_obp_ab;hr_salary_ab', VarArrayOf([obpAb, 'A']), []) then salaryAb := 'A' else salaryAb := 'B';
+    end
+
+    // 법인, 사업장, 부서 선택 시
+    else
+    begin
+      if Form1.vtSuStaff.Locate('hr_obp_ab;hr_obp_code', VarArrayOf([obpAb, obpCode]), []) then
+      begin
+        insertYn := Form1.vtSuStaff.FieldByName('hr_insert').AsString;
+        editYn   := Form1.vtSuStaff.FieldByName('hr_edit').AsString;
+        printYn  := Form1.vtSuStaff.FieldByName('hr_print').AsString;
+        salaryAb := Form1.vtSuStaff.FieldByName('hr_salary_ab').AsString;
+      end;
+    end;
+  end;
+
+  //Form1.Memo3.Lines.Add('setGroupRightYn> '+insertYn+' '+salaryAb);
+end;
+
+// split - 문자열 구분자로 나눠서 원하는 위치(순서)의 문자 리턴
+{ Str       : 문자열
+  Position  : 순서
+  Delimiter : 구분자
+}
+function subStr(str: String; const position: Integer = 1; const delimiter: string = ' '): string;
+var
+  strLen, zeichenIdx, subIdx, komPos: integer;
+begin
+  Result    := '';
+  str       := str + delimiter;
+  strLen    := Length(Str);
+  zeichenIdx:= 1;
+  subIdx    := 1;
+
+  While zeichenIdx <= strLen do
+  begin
+    komPos := Pos(delimiter, str);
+
+    if komPos <> 0 then
+    begin
+      if subIdx = position then
+      begin
+        Result := Copy(str, 1, komPos - 1);
+        break;
+      end;
+
+      Delete(Str, 1, komPos);
+      Inc(subIdx);
+    end;
+    Inc(zeichenIdx);
+  end;
+end;
+// splitCd - 코드 콤보박스 문자열 구분자로 나눠서 코드, 코드값 리턴
+{ Str       : 문자열
+  Position  : 1-코드, 2-코드값
+  Delimiter : 구분자
+}
+function splitCd(str: String; const position: Integer = 1; const delimiter: string = ' '): string;
+var
+  strLen, komPos: integer;
+begin
+  Result := '';
+  strLen := Length(Str);
+  komPos := Pos(delimiter, str);
+
+  if position = 1 then
+    Result := Trim(Copy(str, 1, komPos))
+  else if position = 2 then
+    Result := Trim(Copy(str, komPos+1, strLen));
+end;
+
+
+// 공통코드 콤보박스에서 선택한 콤보text에서 코드값만 가져오기
+function getCommCodeVal(cb: TWinControl): String;
+begin
+  if (cb is TComboBox) then
+  begin
+    with TComboBox(cb)do
+    begin
+      if ((Pos('선택', Items[0]) > 0) or (Items[0] = '전체')) and (ItemIndex = 0) then
+      begin
+          result := '';
+      end
+      else
+      begin
+          result := subStr(Text, 1, ' ');
+      end;
+    end;
+  end
+
+  else if (cb is TcxComboBox) then
+  begin
+    with TcxComboBox(cb)do
+    begin
+      if ((Pos('선택', Properties.Items[0]) > 0) or (Properties.Items[0] = '전체')) and (ItemIndex = 0) then
+      begin
+          result := '';
+      end
+      else
+      begin
+          result := subStr(Text, 1, ' ');
+      end;
+    end;
+  end
+
+  else if (cb is TCheckListBox) then
+  begin
+    with TCheckListBox(cb)do
+    begin
+      if ((Pos('선택', Items[0]) > 0) or (Items[0] = '전체')) and (ItemIndex = 0) then
+      begin
+          result := '';
+      end
+      else
+      begin
+          result := subStr(Items.Strings[ItemIndex], 1, ' ');
+      end;
+    end;
+  end
+
+  else if (cb is TcxCheckListBox) then
+  begin
+    with TcxCheckListBox(cb)do
+    begin
+      if ((Pos('선택', Items[0].Text) > 0) or (Items[0].Text = '전체')) and (ItemIndex = 0) then
+      begin
+          result := '';
+      end
+      else
+      begin
+          result := subStr(Items[ItemIndex].Text, 1, ' ');
+      end;
+    end;
+  end;
+end;
+
+
+// 공통코드 콤보박스에서 code 매칭 index 가져오기
+function getMatchCodeIdx(code: String; cbNm: TComboBox):Integer; overload;
+var
+  i, idx: Integer;
+begin
+  idx := 0;
+  for i := 0 to cbNm.Items.Count - 1 do   // (윤) itemindex가 0부터 시작하니까
+  begin
+    if subStr(cbNm.Items.Strings[i], 1, ' ') = code then    //  -> cbxCodeAb = vtCode.FieldByName('hr_code_value_ab').AsString 냐
+    begin
+      idx := cbNm.Items.IndexOf(cbNm.Items.Strings[i]);
+      Break;
+    end;
+  end;
+  Result := idx;
+end;
+
+// 콤보박스에서 code 매칭 value 가져오기
+function getMatchCodeVal(code: String; cbNm: TComboBox):String;
+var
+  i: Integer;
+  val: String;
+begin
+  val := '';
+  for i := 0 to cbNm.Items.Count - 1 do
+  begin
+    if (splitCd(cbNm.Items.Strings[i], 1) = Trim(code)) then
+    begin
+      val := splitCd(cbNm.Items.Strings[i], 2);
+      Break;
+    end;
+  end;
+  Result := val;
+end;
+
+// true, false -> Y, N으로 치환
+function getYn(bool: Boolean): String; overload;
+begin
+  if bool = true then
+    result := 'Y'
+  else //if bool = false then
+    result := 'N';
+end;
+
+// 1, 0 -> Y, N으로 치환
+function getYn(str: string): String; overload;
+begin
+  if str = '1' then
+    result := 'Y'
+  else
+    result := 'N';
+end;
+
+// Y, N -> true, false 로 치환
+function getBool(yn: String): Boolean;
+begin
+  if (yn = 'Y') or (yn = '1') then
+    result := True
+  else
+    result := False;
+end;
+
+// 삭제확인창 메세지
+function confirmDelMsg(msg: String = ''): Integer;
+begin
+  if msg = '' then
+    msg := '삭제 후에는 복원할 수 없습니다.' + #13#10 + '삭제하시려면 저장(F4)버튼을 눌러주세요';
+  result := MessageBox(0, PChar(msg), '삭제확인', MB_OKCANCEL);
+end;
+
+
+// 화면모드별 입력 컴포넌트 속성 변경
+{ obj : 컴포넌트명
+  mode: 화면모드(0:보기, 1:등록, 2: 수정, 3:삭제)
+  e   : 필수값여부(0:비필수, 1:필수, 2:비활성(수정모드에서))
+}
+procedure setObjEnable(const obj: TComponent; mode: Integer; e: Integer = 0);
+var
+  esseColr, nesseColr, inactColr: TColor;
+  i: Integer;
+begin
+  esseColr  := $00D2FEFF; // 필수
+  nesseColr := $00FFFFFF; // 비필수
+  inactColr := $00FCFCFC; // 비활성 $00EEEEEE
+  case mode of
+    0, 3: // 보기, 삭제
+    begin
+      if (obj is TEdit) or (obj is TMaskEdit) or (obj is TcxCurrencyEdit) then
+      begin
+        TEdit(obj).Enabled  := false;
+        TEdit(obj).Color    := inactColr ;
+      end
+
+      else if (obj is TComboBox) or (obj is TCheckListBox) or (obj is TcxComboBox) or (obj is TcxCheckListBox) then
+      begin
+        TComboBox(obj).Enabled := false;
+        TComboBox(obj).Color   := inactColr;
+      end
+
+      else if (obj is TCheckBox) or (obj is TRadioButton) or (obj is TButton) or (obj is TSpeedButton) or (obj is TcxRadioGroup) then
+      begin
+        TWinControl(obj).Enabled := false;
+      end
+
+      else if obj is TDateTimePicker then
+      begin
+        TDateTimePicker(obj).Enabled := false;
+        TDateTimePicker(obj).Color   := inactColr;
+      end
+
+      else if obj is TDBGrid then
+      begin
+        TDBGrid(obj).Enabled := false;
+        TDBGrid(obj).Color   := inactColr;
+      end
+
+      else if obj is TMemo then
+      begin
+        TMemo(obj).Enabled := false; // (윤)
+        TMemo(obj).ReadOnly := True;
+        TMemo(obj).Color    := inactColr;
+      end
+
+      else if obj is TcxLookupComboBox then
+      begin
+        TcxLookupComboBox(obj).Enabled := False;
+        TcxLookupComboBox(obj).Style.Color := inactColr;
+      end
+
+      else if obj is TcxControl then
+      begin
+        TcxControl(obj).Enabled := false;
+      end
+
+      else if obj is TGroupBox then
+      begin
+        for i := 0 to TGroupBox(obj).ControlCount - 1 do
+        begin
+          TGroupBox(obj).Controls[i].Enabled := False;
+        end;
+      end;
+    end;
+
+    1: // 등록
+    begin
+      if (obj is TEdit) or (obj is TMaskEdit) or (obj is TcxCurrencyEdit) then
+      begin
+        TEdit(obj).Enabled := true;
+
+        if e = 0 then
+          TEdit(obj).Color := nesseColr
+        else
+          TEdit(obj).Color := esseColr;
+      end
+
+      else if (obj is TComboBox) or (obj is TCheckListBox) or (obj is TcxComboBox) or (obj is TcxCheckListBox) then
+      begin
+        TComboBox(obj).Enabled := true;
+
+        if e = 0 then
+          TComboBox(obj).Color := nesseColr
+        else
+          TComboBox(obj).Color := esseColr;
+      end
+
+      else if obj is TCheckBox then
+      begin
+        TCheckBox(obj).Enabled := true;
+        //TCheckBox(obj).Checked := false;
+      end
+
+      else if (obj is TRadioButton) or (obj is TButton) or (obj is TSpeedButton) or (obj is TcxRadioGroup) then
+      begin
+        TWinControl(obj).Enabled := true;
+      end
+
+      else if obj is TDateTimePicker then
+      begin
+        TDateTimePicker(obj).Enabled := true;
+        if e = 0 then
+          TDateTimePicker(obj).Color := nesseColr
+        else
+          TDateTimePicker(obj).Color := esseColr;
+      end
+
+      else if obj is TMemo then
+      begin
+        TMemo(obj).Enabled := true;         // (윤)
+        TMemo(obj).ReadOnly := False;
+        if e = 0 then
+          TMemo(obj).Color := nesseColr
+        else
+          TMemo(obj).Color := esseColr;
+      end
+
+      else if obj is TDBGrid then
+      begin
+        TDBGrid(obj).Enabled := true;
+        TDBGrid(obj).Color := nesseColr;
+      end
+
+      else if obj is TcxLookupComboBox then
+      begin
+        TcxLookupComboBox(obj).Enabled := True;
+        if e = 0 then
+          TcxLookupComboBox(obj).Style.Color := nesseColr
+        else
+          TcxLookupComboBox(obj).Style.Color := esseColr;
+      end
+
+      else if obj is TcxControl then
+      begin
+        TcxControl(obj).Enabled := True;
+      end
+
+      else if obj is TGroupBox then
+      begin
+        for i := 0 to TGroupBox(obj).ControlCount - 1 do
+        begin
+          TGroupBox(obj).Controls[i].Enabled := True;
+        end;
+      end;
+    end;
+
+    2: // 수정
+    begin
+      if (obj is TEdit) or (obj is TMaskEdit) or (obj is TcxCurrencyEdit) then
+      begin
+        if e = 0 then
+        begin
+          TEdit(obj).Enabled  := true;
+          TEdit(obj).Color    := nesseColr;
+        end
+        else if e = 1 then
+        begin
+          TEdit(obj).Enabled  := true;
+          TEdit(obj).Color    := esseColr;
+        end
+        else if e = 2 then
+        begin
+          TEdit(obj).Enabled  := false;
+          TEdit(obj).Color    := inactColr;
+        end;
+      end
+
+      else if (obj is TComboBox) or (obj is TCheckListBox) or (obj is TcxComboBox) or (obj is TcxCheckListBox) then
+      begin
+        if e = 0 then
+        begin
+          TComboBox(obj).Enabled  := true;
+          TComboBox(obj).Color    := nesseColr;
+        end
+        else if e = 1 then
+        begin
+          TComboBox(obj).Enabled  := true;
+          TComboBox(obj).Color    := esseColr;
+        end
+        else if e = 2 then
+        begin
+          TComboBox(obj).Enabled  := false;
+          TComboBox(obj).Color    := inactColr;
+        end;
+      end
+
+      else if (obj is TCheckBox) or (obj is TRadioButton) or (obj is TButton) or (obj is TSpeedButton) or (obj is TcxRadioGroup) then
+      begin
+        TWinControl(obj).Enabled := true;
+        if e in [0,1] then
+        begin
+          TWinControl(obj).Enabled := true;
+        end
+        else if e = 2 then
+        begin
+          TWinControl(obj).Enabled := False;
+        end;
+      end
+
+      else if obj is TDateTimePicker then
+      begin
+        if e = 0 then
+        begin
+          TDateTimePicker(obj).Enabled  := true;
+          TDateTimePicker(obj).Color    := nesseColr;
+        end
+        else if e = 1 then
+        begin
+          TDateTimePicker(obj).Enabled  := true;
+          TDateTimePicker(obj).Color    := esseColr;
+        end
+        else if e = 2 then
+        begin
+          TDateTimePicker(obj).Enabled  := false;
+          TDateTimePicker(obj).Color    := inactColr;
+        end;
+      end
+
+      else if obj is TMemo then
+      begin
+        TMemo(obj).Enabled := true; // (윤)
+        TMemo(obj).ReadOnly := False;
+        if e = 0 then
+          TMemo(obj).Color := nesseColr
+        else
+          TMemo(obj).Color := esseColr;
+      end
+
+      else if obj is TDBGrid then
+      begin
+        TDBGrid(obj).Enabled := True;
+      end
+
+      else if obj is TcxLookupComboBox then
+      begin
+        if e = 0 then
+        begin
+          TcxLookupComboBox(obj).Enabled := True;
+          TcxLookupComboBox(obj).Style.Color := nesseColr;
+        end
+        else if e = 1 then
+        begin
+          TcxLookupComboBox(obj).Enabled := True;
+          TcxLookupComboBox(obj).Style.Color := esseColr;
+        end
+        else if e = 2 then
+        begin
+          TcxLookupComboBox(obj).Enabled := False;
+          TcxLookupComboBox(obj).Style.Color := inactColr;
+        end;
+      end
+
+      else if obj is TcxControl then
+      begin
+        if e in [0,1] then
+        begin
+          TcxControl(obj).Enabled  := True;
+        end
+        //else if e = 1 then
+        //begin
+        //  TcxControl(obj).Enabled  := True;
+        //end
+        else if e = 2 then
+        begin
+          TcxControl(obj).Enabled  := False;
+        end;
+      end
+
+      else if obj is TGroupBox then
+      begin
+        for i := 0 to TGroupBox(obj).ControlCount - 1 do
+        begin
+          TGroupBox(obj).Controls[i].Enabled := True;
+        end;
+      end
+    end;
+  end;
+end;
+
+end.

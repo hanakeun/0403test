@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2018/08/31 16:03:35.000.211,D:\프로젝트_생협업그레이드\전표처리\수수료처리_제반처리\fee_acc.dproj=D:\프로젝트_생협업그레이드\전표처리\수수료처리_제반처리\test_kbg.dproj</Transaction>
+    <Transaction>2018/08/31 16:05:51.000.911,D:\프로젝트_생협업그레이드\전표처리\수수료처리_제반처리\test_kbg.dproj=D:\프로젝트_생협업그레이드\전표처리\수수료처리_제반처리\fee_acc.dproj</Transaction>
+    <Transaction>2018/10/01 18:06:47.000.389,D:\프로젝트_생협업그레이드\ERP_수수료처리\test_yilg.dproj=D:\프로젝트_생협업그레이드\ERP_수수료처리\test_kbg.dproj</Transaction>
+    <Transaction>2019/03/13 16:43:50.463,D:\프로젝트_생협업그레이드\ERP_수수료처리\fee_acc.dproj=D:\프로젝트_생협업그레이드\ERP_수수료처리\test_yilg.dproj</Transaction>
+  </Transactions>
+</BorlandProject>

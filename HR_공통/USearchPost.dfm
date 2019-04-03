@@ -1,0 +1,180 @@
+object fmSearchPost: TfmSearchPost
+  Left = 737
+  Top = 111
+  Caption = #48512#49436#44160#49353
+  ClientHeight = 549
+  ClientWidth = 504
+  Color = clBtnFace
+  Font.Charset = ANSI_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -13
+  Font.Name = #44404#47548
+  Font.Style = []
+  FormStyle = fsStayOnTop
+  KeyPreview = True
+  OldCreateOrder = False
+  Position = poMainFormCenter
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
+  PixelsPerInch = 96
+  TextHeight = 13
+  object ToolBar1: TToolBar
+    Left = 0
+    Top = 0
+    Width = 504
+    Height = 29
+    ButtonHeight = 21
+    ButtonWidth = 57
+    Caption = 'ToolBar1'
+    EdgeBorders = [ebTop, ebBottom]
+    ShowCaptions = True
+    TabOrder = 0
+    object btnInquiry: TToolButton
+      Left = 0
+      Top = 0
+      Caption = #51312#54924'(F9)'
+      ImageIndex = 0
+      OnClick = btnInquiryClick
+    end
+    object btnClose: TToolButton
+      Left = 57
+      Top = 0
+      Caption = #51333#47308
+      ImageIndex = 2
+      OnClick = btnCloseClick
+    end
+  end
+  object gb_cd_save: TGroupBox
+    Left = 0
+    Top = 29
+    Width = 504
+    Height = 53
+    Align = alTop
+    TabOrder = 1
+    object Image1: TImage
+      Left = 11
+      Top = 26
+      Width = 6
+      Height = 6
+      Picture.Data = {
+        07544269746D6170AE000000424DAE0000000000000036000000280000000600
+        000006000000010018000000000078000000C40E0000C40E0000000000000000
+        0000FBEED1F2C25BF2C25BF2C25BF2C25BFCF2DC0000DAA92EDAA92EDAA92EDA
+        A92EDAA92EDCAE3A0000CD9C16CD9C16CD9C16CD9C16CD9C16D0A2240000D7A5
+        32D7A532D7A532D7A532D7A532D9AA3E0000DAA93DDAA93DDAA93DDAA93DDAA9
+        3DDCAE480000F3E1BEDEAE4EDEAE4EDEAE4EDEAE4EF6E9CF0000}
+    end
+    object Label3: TLabel
+      Left = 22
+      Top = 23
+      Width = 26
+      Height = 13
+      Caption = #48512#49436
+    end
+    object edtPost: TEdit
+      Left = 54
+      Top = 19
+      Width = 180
+      Height = 21
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -13
+      Font.Name = #44404#47548
+      Font.Style = []
+      ImeMode = imSHanguel
+      ImeName = 'Microsoft IME 2010'
+      ParentFont = False
+      TabOrder = 0
+      OnKeyPress = edtPostKeyPress
+    end
+  end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Top = 530
+    Width = 504
+    Height = 19
+    Panels = <
+      item
+        Text = 'F1-'#46020#50880#47568', F9-'#51312#54924
+        Width = 50
+      end>
+  end
+  object cxPost: TcxGrid
+    Left = 0
+    Top = 82
+    Width = 504
+    Height = 448
+    Align = alClient
+    TabOrder = 3
+    LookAndFeel.NativeStyle = False
+    object cxviPost: TcxGridDBTableView
+      Navigator.Buttons.CustomButtons = <>
+      OnCellDblClick = cxviPostCellDblClick
+      DataController.DataSource = dsSearchPost
+      DataController.Summary.DefaultGroupSummaryItems = <>
+      DataController.Summary.FooterSummaryItems = <>
+      DataController.Summary.SummaryGroups = <>
+      OptionsData.Deleting = False
+      OptionsData.Editing = False
+      OptionsData.Inserting = False
+      OptionsSelection.CellSelect = False
+      OptionsView.NoDataToDisplayInfoText = ' '
+      OptionsView.ColumnAutoWidth = True
+      OptionsView.GroupByBox = False
+      OptionsView.Indicator = True
+      Styles.Content = Form1.cxContent
+      Styles.Header = Form1.cxHeader
+      object grdcolNo: TcxGridDBColumn
+        Caption = 'No'
+        PropertiesClassName = 'TcxTextEditProperties'
+        Properties.Alignment.Horz = taCenter
+        OnGetDisplayText = grdcolNoGetDisplayText
+        HeaderAlignmentHorz = taCenter
+        Width = 35
+      end
+      object grdcolPostCode: TcxGridDBColumn
+        Caption = #48512#49436#53076#46300
+        DataBinding.FieldName = 'post_code'
+        PropertiesClassName = 'TcxTextEditProperties'
+        Properties.Alignment.Horz = taCenter
+        HeaderAlignmentHorz = taCenter
+        Width = 65
+      end
+      object grdcolPostName: TcxGridDBColumn
+        Caption = #48512#49436#47749
+        DataBinding.FieldName = 'post_name'
+        PropertiesClassName = 'TcxTextEditProperties'
+        HeaderAlignmentHorz = taCenter
+        Width = 170
+      end
+      object grdcolMngName: TcxGridDBColumn
+        Caption = #44288#47532#48512#49436
+        DataBinding.FieldName = 'mng_name'
+        PropertiesClassName = 'TcxTextEditProperties'
+        HeaderAlignmentHorz = taCenter
+        Width = 170
+      end
+    end
+    object cxlvPost: TcxGridLevel
+      GridView = cxviPost
+    end
+  end
+  object vtSearchPost: TVirtualTable
+    Options = [voPersistentData, voStored, voSkipUnSupportedFieldTypes]
+    Left = 37
+    Top = 480
+    Data = {03000000000000000000}
+  end
+  object dsSearchPost: TDataSource
+    DataSet = vtSearchPost
+    Left = 104
+    Top = 480
+  end
+  object vtPost: TVirtualTable
+    Options = [voPersistentData, voStored, voSkipUnSupportedFieldTypes]
+    Left = 36
+    Top = 426
+    Data = {03000000000000000000}
+  end
+end

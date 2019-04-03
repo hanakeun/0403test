@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2018/03/09 16:52:22.000.313,=C:\Users\USER\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2018/03/09 17:09:50.000.221,D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\Unit1.pas=C:\Users\USER\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2018/03/09 17:09:50.000.221,D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\Unit1.dfm=C:\Users\USER\Documents\Embarcadero\Studio\Projects\Unit1.dfm</Transaction>
+    <Transaction>2018/03/09 17:11:21.000.862,=D:\프로젝트_생협업그레이드\coophr_utils\coophr_utils.pas</Transaction>
+    <Transaction>2018/03/09 17:14:28.000.324,D:\프로젝트_생협업그레이드\HR_기초정보\HR인사코드정보\test_yilg.dproj=C:\Users\USER\Documents\Embarcadero\Studio\Projects\Project1.dproj</Transaction>
+  </Transactions>
+</BorlandProject>

@@ -1,0 +1,1871 @@
+unit coophr_utils;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Controls, Forms,
+  Dialogs, StdCtrls, ZConnection, ZDataset, DBGrids, Graphics, Grids,
+  ComCtrls, Buttons, URCtrls, VirtualTable, Mask, CheckLst, DateUtils, URDataCombo;
+
+// 숫자만 입력
+procedure onlyNumber(var key: char);
+
+// 문자열 null 확인
+function isEmpty(str: String): Boolean;
+
+// 필수입력항목 확인
+{ obj: 필수입력컴포넌트명
+  lab: 필수입력항목 label
+}
+function chkExtVal(obj: TComponent; lab: String): Boolean;
+
+// 공통콤보박스 옵션 'N'일 때 선택항목 유무 확인
+// 콤보박스 index 0의 text 옵션 (A:전체, S:선택하세요, N:없음)
+function chkCbCommCode(obj: TComboBox): Boolean;
+
+// 사원번호, 부서번호 유효성 확인
+{ ntype - 1: 사원번호
+          2: 부서번호
+}
+function chkTypeNo(obj: TEdit; ntype: Integer): Boolean;
+
+// 주민번호 유효성 확인
+{idNo : '-' 제외한 숫자 13자리}
+function chkIdNo(const idNo: String): Boolean;
+// 외국인등록번호 유효성 확인
+{idNo : '-' 제외한 숫자 13자리}
+function chkForeignNo(const idNo: String): Boolean;
+
+// 사업자등록번호 유효성 확인
+{bizRegNo : - 제외한 숫자 10자리}
+function chkBizRegNo(const bizRegNo: String): Boolean;
+
+// split - 문자열 구분자로 나눠서 원하는 위치(순서)의 문자 가져오기
+{ Str       : 문자열
+  Position  : 순서
+  Delimiter : 구분자
+}
+function subStr(str: String; const position: Integer; const delimiter: string = ' '): String;
+function splitCd(str: String; const position: Integer; const delimiter: string = ' '): string;
+
+// 화면모드별 입력 컴포넌트 속성 변경
+{ obj : 컴포넌트명
+  mode: 화면모드(0:보기, 1:등록, 2: 수정, 3:삭제)
+  e   : 필수값여부(0:비필수, 1:필수, 2:비활성)
+}
+procedure setObjEnable(const obj: TComponent; mode: Integer; e: Integer);
+
+// 화면모드별 조건 컴포넌트 속성 변경
+procedure setCondEnable(const obj: TComponent; mode: Integer; e: Integer);
+
+// (화면모드별, 사용자 프로그램권한별) 버튼 활성화 설정
+//procedure setProBtnEnable(modeInt: Integer; btnInsert, btnUpdate, btnInit, btnSave, btnPrint, btnExcel: TButton);
+
+// 부서 조회 - 부서 테이블 4차서버 연결로 추가
+procedure selectPost(db: TZConnection; vtPost: TVirtualTable);
+
+// 공통코드를 콤보박스, 체크리스트박스에 세팅
+{ dsNm      : TZQuery명
+  vtTemp    : TVirtualTable명
+  codeId    : 공통코드ID
+  cbFirTxt  : 콤보박스 index 0의 text (A:전체, S:선택하세요, N:없음)
+  cbNm      : 콤보박스명, 체크리스트박스명
+}
+procedure setCbCommCode(dsNm: TZQuery; vtTemp: TVirtualTable; codeId, cbFirTxt: String; cbNm: TComboBox); overload;
+procedure setCbCommCode(dsNm: TZQuery; vtTemp: TVirtualTable; codeId, cbFirTxt: String; cbNm: TCheckListBox); overload;
+
+// 소속, 직급, 직책 콤보박스 세팅
+{ dsNm      : TZQuery명
+  codeId    : 공통코드ID
+  cbFirTxt  : 콤보박스 index 0의 text (A:전체, S:선택하세요, N:없음, C:코드만, M:코드명만)
+  cbNm      : 콤보박스명
+  mCode     : 사원번호
+}
+procedure setCbCode(db: TZConnection; dsNm: TZQuery; codeId, cbFirTxt: String; cbNm: TWinControl; userCode:String = '');
+
+// 체크리스트박스 전체 선택, 해제
+procedure setCklAll(cklNm:TCheckListBox);
+
+// 체크리스트박스 초기화
+procedure setCklInit(cklNm:TCheckListBox);
+
+// 체크리스트박스 checked count
+function getCklChkCnt(cklNm:TCheckListBox): Integer;
+function getNCklChkCnt(cklNm:TCheckListBox): Integer;
+
+// 체크리스트박스 체크 선택 코드를 콤마(,)로 구분한 문자열(IN 조건)
+// 1:코드, 2:코드값
+function getCklCondStr(cklNm:TCheckListBox; ab:Integer = 1): String;
+
+// 콤보박스에서 선택한 콤보text에서 코드값만 가져오기
+function getCommCodeVal(cb: TComboBox): String; overload;
+function getCommCodeVal(ckl: TCheckListBox): String; overload;
+
+// 체크리스트박스에서 선택한 text에서 코드값명만 가져오기
+function getCodeValNm(ckl: TCheckListBox): String;
+
+// 콤보박스에서 value 매칭 code 가져오기
+function getMatchValueCode(value: String; cbNm: TComboBox):String;
+
+// 콤보박스에서 code 매칭 index 가져오기
+function getMatchCodeIdx(code: String; cbNm: TComboBox):Integer; overload;
+function getMatchCodeIdx(code: String; cbNm: TwDataCombo):Integer; overload;
+function getMatchCodeIdx(code: String; ckl: TCheckListBox):Integer; overload;
+
+// 콤보박스에서 code 매칭 value 가져오기
+function getMatchCodeVal(code: String; cbNm: TComboBox):String;
+
+// 콤보박스에서 value 매칭 index 가져오기
+function getMatchValueIdx(val: String; cbNm: TComboBox):Integer;
+
+// 사용자 프로그램의 단체, 프로그램 등록, 수정, 인쇄 권한 조회
+procedure inquirySustaff();
+// 사용자 프로그램의 법인별 사업장별 부서별 등록, 수정, 출력 권한
+procedure setGroupRightYn(obpAb: String = ''; obpCode: String = '');
+
+// 급여정보허용 권한에 따른 Display Format 반환
+function getSalaryFormat(salaryAb: String): String;
+
+// 사용자권한 법인, 부서 조회
+{ vtSustaff : vtCompany, vtPost
+  obpAb     : 법인, 부서코드 구분( 'hr_o_code', 'hr_post_code')
+  mpstCode  : 사용자사원번호
+  return    : 권한있는 법인(또는 부서)코드를 콤마(,)로 구분한 문자열  예) 코드1, 코드2, 코드3
+}
+function getStrObpCode(obpAb: String):String;
+
+// 해당부서의 권한 유무 확인
+{ vtSustaff : vtCompany, vtPost
+  ab        : 법인, 부서코드 구분( 'hr_o_code', 'hr_post_code')
+  code      : 권한유무를 확인할 법인, 부서코드
+  return    : 권한유무(Y, N)
+}
+function getStaffYn(vt: TVirtualTable; ab: String; code: String):String;
+
+// true, false -> Y, N으로 치환 (체크박스, 라디오버튼의 checked 변환 시 사용)
+function getYn(bool: Boolean): String;
+
+// Y, N -> true, false 로 치환
+function getBool(yn: String): Boolean;
+
+// 삭제확인창 메세지
+function confirmDelMsg(msg: String = ''): Integer;
+
+// 날짜 초기화 : 1900-01-01
+function initDt(): TDate;
+
+// dateTimePicker 데이터 null일 때 date 지우기
+procedure setDt(dt: TDateTimePicker; strDate: String);
+
+// 날짜 문자열 dateTime 타입으로 변환
+function convtDateType(strDate: String): TDate;
+
+// 입력날짜 유효성 체크
+function isDate(str: String; msgYn: Boolean): Boolean;
+//function isDate(str: String): Boolean;
+//function isDateTime(str: String): Boolean;
+
+// 입력날짜 From~To 기간 체크
+function validPeriod(fromDt, toDt: TDateTimePicker): Boolean; overload;
+function validPeriod(fromDt, toDt: TDateTime): Boolean; overload;
+
+// 전화번호 유효성 확인
+{ telNo : 하이픈(-) 포함한 전화번호 }
+function chkTelNo(telNo: String): Boolean;
+
+// 주민번호로 생년월일 구하기
+{ id1 : 주민번호 앞자리
+  id2 : 주민번호 뒷자리
+  id : 하이픈(-) 없는 주민번호 - 주민번호앞6자리 + 뒷첫째자리 이상이면 가능
+}
+function getBirthdayByIdNo(id: String): TDate;
+
+// 날짜로 요일구하기
+function getWeekday(date: TDateTime): String;
+
+// ERP단체코드와 HR법인코드 매칭
+{ dsNm      : TZQuery명
+  oCode     : ERP단체코드 또는 HR법인코드
+  oCodeAb   : 구분 : ERP-ERP단체코드, HR-HR법인코드
+  return    : 매칭코드
+}
+function getMatchOCode(oCode, oCodeAb:String): String;
+
+// 개발자 테스트 컨트롤 보임
+procedure showCtrl(ctrl: TControl);
+
+// 그리드 타이틀 클릭 시 정렬
+procedure sortGrid(var cIdx: Integer; var cTitleCaption: String; col: TColumn);
+
+// DBGrid 타이틀 2줄로 쓰기
+// DBGrid의 OnDrawColumnCell 이벤트에서 호출
+// drawMultiLineTitleGrid(Sender, Rect, Column);
+procedure drawMultiLineTitleGrid(Sender: TObject; const Rect: TRect; Column: TColumn);
+
+
+implementation
+
+uses coop_utils, coop_sql_updel, Unit1, DB;
+
+type
+  TADBGrid = class(TDBGrid);
+
+var
+  days: array[0..11] of Integer = (31,28,31,30,31,30,31,31,30,31,30,31);
+  weekdays: array[1..7] of string = ('일','월','화','수','목','금','토');
+
+// 에러메세지
+const
+  MSG_ERR_CD1 = '선택 가능 항목이 없습니다.';                       // 공통코드 에러메세지1
+  MSG_ERR_VAL1 = ' 항목은 필수값입니다.';                           // 유효성확인1
+  MSG_ERR_VAL2 = ' 항목은 필수선택값입니다.';                       // 유효성확인2
+  MSG_ERR_VAL_DATE1 = '일자 형식이 맞지않습니다.';                  // 날짜유효성확인1
+  MSG_ERR_VAL_DATE2 = '입력기간의 시작일자가 종료일자보다 큽니다.'; // 날짜유효성확인2
+  MSG_ERR_MATCH_OCODE = '해당 법인정보의 ERP단체코드를 확인하세요.';// 법인코드, ERP단체코드 매칭오류
+
+// 그리드 타이틀 클릭 시 정렬
+{
+ 1. 전역변수 선언
+      colIdx: Integer; titleCaption: String;
+
+ 2. 조회 시 정렬초기화
+      vt.IndexFieldNames := '';
+      grid.Columns[colIdx].Title.Caption := titleCaption;
+
+ 3. OnTitleClick 이벤트에서 함수 호출
+      sortGrid(colIdx, titleCaption, Column);
+}
+procedure sortGrid(var cIdx: Integer; var cTitleCaption: String; col: TColumn);
+var
+  colIdx: Integer;
+  titleCaption, colName: String;
+
+begin
+  with TVirtualTable(col.Grid.DataSource.DataSet) do
+  begin
+    if (RecordCount > 1) then
+    begin
+      colIdx := col.Index;
+      titleCaption := col.Title.Caption;
+      colName := col.FieldName;
+
+      if IndexFieldNames = colName then // ASC
+      begin
+        IndexFieldNames := colName + ' DESC';
+        col.Title.Caption := cTitleCaption + '▼';
+      end
+      else if IndexFieldNames = colName + ' DESC' then // DESC
+      begin
+        IndexFieldNames := colName;
+        col.Title.Caption := cTitleCaption + '▲';
+      end
+      else
+      begin
+        TDBGrid(col.Grid).Columns[cIdx].Title.Caption := cTitleCaption;
+
+        cTitleCaption := titleCaption;
+        IndexFieldNames := colName;
+        col.Title.Caption := titleCaption + '▲';
+      end;
+      cIdx := colIdx;
+    end;
+  end;
+end;
+
+// 개발자 테스트 컨트롤 보임
+procedure showCtrl(ctrl: TControl);
+begin
+  if (mpst_code = '0579033000') then // 0579033000 - 정송
+    ctrl.Visible := True
+  else
+    ctrl.Visible := False;
+end;
+
+// Date로 요일조회
+function getWeekday(date: TDateTime): String;
+begin
+  Result := weekdays[DayOfWeek(date)];
+end;
+
+// 숫자만 입력
+procedure onlyNumber(var key: char);
+const
+  Bksp = #08; // Backspace키
+begin
+  if not (key in ['0'..'9', Bksp]) then
+    key := #0;
+end;
+
+// 문자열 null 확인
+function isEmpty(str: String): Boolean;
+begin
+  if (Trim(str) = '') or (Length(Trim(str)) = 0) then
+    result := False
+  else
+    result := True;
+end;
+
+// 필수입력항목 확인
+{ obj: 필수입력컴포넌트명
+  lab: 필수입력항목 label
+}
+function chkExtVal(obj: TComponent; lab: String): Boolean;
+begin
+  if obj is TEdit then
+  begin
+    if not isEmpty(Trim(TEdit(obj).Text)) then
+    begin
+      ShowMessage(lab + MSG_ERR_VAL1);
+      TEdit(obj).SetFocus;
+      Result := False;
+    end
+    else Result := True;
+  end
+  else if obj is TComboBox then
+  begin
+    if TComboBox(obj).ItemIndex = 0 then
+    begin
+      ShowMessage(lab + MSG_ERR_VAL2);
+      TComboBox(obj).SetFocus;
+      SendMessage(TComboBox(obj).Handle, CB_SHOWDROPDOWN, Integer(true), 0);
+      Result := False;
+    end
+    else Result := True;
+  end
+  else if obj is TwNumEdit then
+  begin
+    if TwNumEdit(obj).Value = 0 then
+    begin
+      ShowMessage(lab + MSG_ERR_VAL1);
+      TwNumEdit(obj).SetFocus;
+      Result := False;
+    end
+    else Result := True;
+  end
+  else if obj is TDateTimePicker then
+  begin
+    if DateToStr(TDateTimePicker(obj).Date) = '1900/01/01' then // 디폴트값 변경 확인
+    begin
+      ShowMessage(lab + ' 일자를 확인하세요.');
+      TDateTimePicker(obj).SetFocus;
+      Result := False;
+    end
+    else Result := True;
+  end
+  else if obj is TCheckListBox then
+  begin
+    if getCklChkCnt(TCheckListBox(obj)) = 0 then
+    begin
+      ShowMessage(lab + MSG_ERR_VAL2);
+      TCheckListBox(obj).SetFocus;
+      Result := False;
+    end
+    else Result := True;
+  end
+  else Result := True;
+end;
+
+// 공통콤보박스 옵션 'N'일 때 선택항목 유무 확인
+// 콤보박스 index 0의 text 옵션 (A:전체, S:선택하세요, N:없음)
+function chkCbCommCode(obj: TComboBox): Boolean;
+begin
+  if obj.Text = MSG_ERR_CD1 then
+  begin
+    ShowMessage('선택 가능한 항목이 없습니다.');
+    Result := False;
+  end
+  else
+    Result := True;
+end;
+
+// 사원번호, 부서번호 유효성 확인
+{ ntype - 1: 사원번호
+          2: 부서번호
+}
+function chkTypeNo(obj: TEdit; ntype: Integer): Boolean;
+var
+  i: integer;
+begin
+  case ntype of
+    1: // 사원번호
+    begin
+      // 2014-02-07 홍익인간 데이터 이관 시 사원번호 10자리가 아닌 사원 존재하여 수정 (31풀무법인 63명)
+      if (not isEmpty(Trim(obj.Text))) or (Length(Trim(obj.Text)) <> 10) then
+      //if (not isEmpty(Trim(obj.Text))) or (Length(Trim(obj.Text)) > 10) then
+      begin
+        ShowMessage('사원번호를 확인하세요.');
+        obj.SetFocus;
+        result := False;
+      end
+      else Result := True;
+    end;
+    2: // 부서코드
+    begin
+      if (not isEmpty(Trim(obj.Text))) {or (Length(Trim(obj.Text)) <> 4) or (not TryStrToInt(Copy(Trim(obj.Text),2,3), i))} then
+      begin
+        ShowMessage('부서코드를 확인하세요.');
+        obj.SetFocus;
+        result := False;
+      end
+      else Result := True;
+    end
+    else Result := True;
+  end;
+end;
+
+// 주민등록번호 유효성 확인
+{idNo : - 제외한 숫자 13자리}
+function chkIdNo(const idNo: String): Boolean;
+const weight = '234567892345';
+var
+  Sum, i: Integer;
+  res: Integer;
+begin
+  Result := False;
+
+  if Length(Trim(idNo)) <> 13 then Exit
+  //else if StrToInt(Copy(idNo,7,1)) in [1, 2, 3, 4] then Exit
+  else
+  begin
+    Sum := 0;
+    for i := 1 to 12 do
+      Sum := Sum + (StrToInt(idNo[i]) * StrToInt(weight[i]));
+
+    res := (11 - (Sum mod 11)) mod 10;
+
+    //if res = 10 then res := 0
+    //else if res = 11 then res := 1;
+
+    if res = StrToInt(idNo[13]) then
+      Result := True;
+  end;
+end;
+// 외국인등록번호 유효성 확인
+function chkForeignNo(const idNo: String): Boolean;
+const weight = '234567892345';
+var
+  Sum, i: Integer;
+  res: Integer;
+begin
+  Result := False;
+
+  if Length(Trim(idNo)) <> 13 then Exit
+  //else if StrToInt(idNo[12]) in [5, 6, 7, 8] then Exit
+  //else if ((StrToInt(idNo[8]) * 10 + StrToInt(idNo[9])) div 2) <> 0 then Exit
+  else
+  begin
+    Sum := 0;
+    for i := 1 to 12 do
+      Sum := Sum + (StrToInt(idNo[i]) * StrToInt(weight[i]));
+
+    res := (11 - (Sum mod 11)) mod 10 + 2;
+
+    if res = 10 then res := 0
+    else if res = 11 then res := 1;
+
+    if res = StrToInt(idNo[13]) then
+      Result := True;
+  end;
+end;
+
+// 사업자등록번호 유효성 확인
+{bizRegNo : - 제외한 숫자 10자리}
+function chkBizRegNo(const bizRegNo: String): Boolean;
+const weight = '1371371351';
+var
+  Sum, i: Integer;
+  res: Integer;
+begin
+  Result := False;
+
+  if Length(Trim(bizRegNo)) <> 10 then Exit
+  else
+  begin
+    Sum := 0;
+    for i := 1 to 9 do
+      Sum := Sum + (StrToInt(bizRegNo[i]) * StrToInt(weight[i]));
+
+    res := (10 - (sum + Trunc(StrToInt(bizRegNo[9]) * 5 / 10)) mod 10) mod 10;
+
+    if res = StrToInt(bizRegNo[10]) then
+      Result := True;
+  end;
+end;
+
+// splitCd - 코드 콤보박스 문자열 구분자로 나눠서 코드, 코드값 리턴
+{ Str       : 문자열
+  Position  : 1-코드, 2-코드값
+  Delimiter : 구분자
+}
+function splitCd(str: String; const position: Integer; const delimiter: string = ' '): string;
+var
+  strLen, zeichenIdx, subIdx, komPos: integer;
+begin
+  Result := '';
+  strLen := Length(Str);
+  komPos := Pos(delimiter, str);
+
+  if position = 1 then
+    Result := Trim(Copy(str, 1, komPos))
+  else if position = 2 then
+    Result := Trim(Copy(str, komPos+1, strLen));
+end;
+
+// split - 문자열 구분자로 나눠서 원하는 위치(순서)의 문자 리턴
+{ Str       : 문자열
+  Position  : 순서
+  Delimiter : 구분자
+}
+function subStr(str: String; const position: Integer; const delimiter: string = ' '): string;
+var
+  strLen, zeichenIdx, subIdx, komPos: integer;
+begin
+  Result    := '';
+  str       := str + delimiter;
+  strLen    := Length(Str);
+  zeichenIdx:= 1;
+  subIdx    := 1;
+
+  While zeichenIdx <= strLen do
+  begin
+    komPos := Pos(delimiter, str);
+
+    if komPos <> 0 then
+    begin
+      if subIdx = position then
+      begin
+        Result := Copy(str, 1, komPos - 1);
+        break;
+      end;
+
+      Delete(Str, 1, komPos);
+      Inc(subIdx);
+    end;
+    Inc(zeichenIdx);
+  end;
+end;
+
+// 소속, 사업장, 직급, 직책 콤보박스 세팅
+{ dsNm      : TZQuery명
+  codeId    : 공통코드ID
+  cbFirTxt  : 콤보박스 index 0의 text (A:전체, S:선택하세요, N:없음, C:코드만, M:코드명만)
+  cbNm      : 콤보박스명
+  userCode  : 사원번호(사원의 소속법인 조회 시), 법인코드(사업장, 근무조 조회 시),  그 외는 ''
+}
+procedure setCbCode(db: TZConnection; dsNm: TZQuery; codeId, cbFirTxt: String; cbNm: TWinControl; userCode:String = '');
+var
+  ashSQL, subSQL, ashStr: String;
+
+begin
+  if codeId = 'o_code' then // 사용자의 해당 프로그램의 권한있는 법인 조회
+  begin
+    ashSQL := 'SELECT hr_o_code, hr_o_name '
+            + 'FROM hr_company '
+            + 'WHERE hr_o_code IN (SELECT hr_obp_code '
+                                  + 'FROM hr_sustaff_log '
+                                  + 'WHERE hr_m_code = "' + mpst_code + '" '
+                                  + 'AND hr_pro_name = "' + ExtractFileName(Application.ExeName) + '" '
+                                  + 'AND hr_obp_ab = "O" '
+                                  + 'AND p_ab = "A")'
+  end
+  else if codeId = 'emp_o_code' then // 사원의 소속법인 조회
+  begin
+    // 2014.07.10 추가 - 퇴사자의 경우 퇴사법인 보여준다.
+    if subStr(userCode, 2) = '2' then  // 사원구분코드 - 2:퇴사자
+    begin
+      userCode := subStr(userCode, 1);
+
+      ashSQL := 'SELECT C.hr_o_code, C.hr_o_name '
+                + 'FROM hr_company C '
+                + 'JOIN hr_group_his G '
+                + 'ON C.hr_o_code = G.hr_o_code '
+                + 'WHERE 1=1 '
+                + 'AND (G.hr_o_code, G.hr_seq_no) IN (SELECT hr_o_code, MAX(hr_seq_no) FROM hr_group_his '
+                                                    + 'WHERE hr_m_code = "' + userCode + '" '
+                                                    + 'GROUP BY hr_o_code) '
+                + 'AND G.hr_m_code = "' + userCode + '" '
+                + 'AND G.hr_update_yn = "N" '
+                + 'ORDER BY G.hr_changeday DESC LIMIT 1';
+    end
+    else  // 사원의 소속법인 조회
+    begin
+      // 등록모드 일 때 현재 소속 법인만 선택
+      subSQL := '';
+      if subStr(userCode, 2) = '1' then
+      begin
+        subSQL := 'AND G.hr_ab NOT IN ("B", "E") ';  // 퇴사한 소속의 데이터 변경 필요로 수정(총무팀 요청)으로 주석
+        userCode := subStr(userCode, 1);
+      end;
+
+      ashSQL := 'SELECT C.hr_o_code, C.hr_o_name '
+                + 'FROM hr_company C '
+                + 'JOIN hr_group_his G '
+                + 'ON C.hr_o_code = G.hr_o_code '
+                + 'WHERE 1=1 '
+                + 'AND (G.hr_o_code, G.hr_seq_no) IN (SELECT hr_o_code, MAX(hr_seq_no) FROM hr_group_his '
+                                                    + 'WHERE hr_m_code = "' + userCode + '" '
+                                                    + 'AND hr_update_yn = "N" '
+                                                    + 'GROUP BY hr_o_code) '
+                + 'AND G.hr_m_code = "' + userCode + '" '
+                + subSQL
+                + 'AND G.hr_update_yn = "N" '
+                + 'ORDER BY C.hr_o_code ASC';
+    end;
+  end
+  else if codeId = 'a_o_code' then // 모든 법인 조회
+  begin
+    ashSQL := 'SELECT hr_o_code, hr_o_name '
+            + 'FROM hr_company '
+            + 'WHERE 1=1 '
+            //+ 'AND hr_o_use_yn = "Y" '
+            + 'AND hr_o_code NOT IN ("0098","0099")'
+  end
+  else if codeId = 'old_o_code' then // 근속수당 지급 법인 조회
+  begin
+    ashSQL := 'SELECT hr_o_code, hr_o_name '
+            + 'FROM hr_company '
+            + 'WHERE hr_o_use_yn = "Y" '
+            + 'AND hr_o_old_yn = "Y"'
+  end
+  // 사용자의 해당 프로그램의 권한있는 법인 소속 사업장과 권한있는 사업장 조회
+  else if (codeId = 'b_code') and (userCode = '')  then
+  begin
+    ashSQL := 'SELECT '
+            + 'CONCAT(hr_o_code, "-", hr_b_code) hr_b_code'
+            + ', hr_b_name '
+            + 'FROM hr_branch '
+            + 'WHERE hr_o_code IN (SELECT hr_obp_code '
+                                + 'FROM hr_sustaff_log '
+                                + 'WHERE hr_m_code = "' + mpst_code + '" '
+                                + 'AND hr_pro_name = "' + ExtractFileName(Application.ExeName) + '" '
+                                + 'AND hr_obp_ab = "O" '
+                                + 'AND p_ab = "A")'
+            + 'OR hr_b_code IN (SELECT hr_obp_code '
+                                + 'FROM hr_sustaff_log '
+                                + 'WHERE hr_m_code = "' + mpst_code + '" '
+                                + 'AND hr_pro_name = "' + ExtractFileName(Application.ExeName) + '" '
+                                + 'AND hr_obp_ab = "B" '
+                                + 'AND p_ab = "A")';
+  end
+  else if (codeId = 'b_code') and (userCode <> '') then // 해당 법인의 사업장 조회
+  begin
+    ashSQL := 'SELECT '
+            + 'CONCAT(hr_o_code, "-", hr_b_code) hr_b_code'
+            + ', hr_b_name '
+            + 'FROM hr_branch '
+            + 'WHERE hr_o_code = "' + userCode + '"';
+  end
+  else if codeId = 'po_code' then // 직급
+  begin
+    ashSQL := 'SELECT'
+            + ' hr_po_code'
+            + ', hr_po_name '
+            + 'FROM hr_position '
+            + 'WHERE hr_use_yn <> "N" '
+            + 'ORDER BY hr_po_code';
+  end
+  else if codeId = 'du_code' then // 직책
+  begin
+    ashSQL := 'SELECT'
+            + ' hr_du_code'
+            + ', hr_du_name '
+            + 'FROM hr_duty '
+            + 'WHERE hr_use_yn <> "N" '
+            + 'AND hr_du_ab = "A"'
+            + 'ORDER BY hr_du_code';
+  end
+  else if codeId = 'post_code' then // 사용자의 권한있는 부서 조회
+  begin
+    {ashSQL := 'SELECT'
+            + ' post_code'
+            + ', post_name '
+            + 'FROM admin_post '
+            + 'WHERE post_code IN (SELECT hr_obp_code '
+                                + 'FROM hr_sustaff_log '
+                                + 'WHERE hr_m_code = "' + mpst_code + '" '
+                                + 'AND hr_pro_name = "' + ExtractFileName(Application.ExeName) + '" '
+                                + 'AND hr_obp_ab = "P" '
+                                + 'AND p_ab = "A")';
+    }
+
+    ashSQL := 'SELECT hr_obp_code '
+          + 'FROM hr_sustaff_log '
+          + 'WHERE hr_m_code = "' + mpst_code + '" '
+          + 'AND hr_pro_name = "' + ExtractFileName(Application.ExeName) + '" '
+          + 'AND hr_obp_ab = "P" '
+          + 'AND p_ab = "A"';
+
+    ashStr := MySQL_Assign(Form1.db_coophr, dsNm, ashSQL, Form1.vtTemp);
+    try
+      StrToInt(ashStr);
+    except
+      if mpst_code = '0579033000' then
+      begin
+        ShowMessage(ashStr);
+      end;
+    end;
+
+    ashStr := '""';
+    Form1.vtTemp.First;
+    while not Form1.vtTemp.Eof do
+    begin
+      if ashStr = '' then
+        ashStr := '"' + Form1.vtTemp.FieldByName('hr_obp_code').AsString + '"'
+      else
+        ashStr := ashStr + ',"' + Form1.vtTemp.FieldByName('hr_obp_code').AsString + '"';
+      Form1.vtTemp.Next;
+    end;
+
+    ashSQL := 'SELECT post_code, post_name '
+            + 'FROM admin_post '
+            + 'WHERE post_code IN (' + ashStr + ')';
+
+  end
+  else if codeId = 'pr_sudnag_code' then // 개인수당/공제
+  begin
+    ashSQL := 'SELECT hr_sg_code, hr_sg_name FROM hr_sudang_gongje '
+            + 'WHERE hr_sg_ab = "D" ' // D:개인수당/공제
+            + 'AND hr_basic_yn <> "Y" ' // Y:연봉계약서 항목
+            + 'AND hr_use_yn = "Y"';
+  end
+  else if codeId = 'bonus_code' then // 상여코드
+  begin
+   ashSQL := 'SELECT hr_sg_code, hr_sg_name'
+          + ' FROM hr_sudang_gongje'
+          + ' WHERE hr_sg_ab = "C" AND hr_use_yn <> "N"';
+  end
+  else if codeId = 'unit_code' then // 근무조
+  begin
+    if userCode = '' then // 전체 근무조
+      ashSQL := 'SELECT'
+              + ' hr_unit_code'
+              + ', hr_unit_name '
+              + 'FROM hr_work_unit '
+              + 'WHERE hr_use_yn = "Y"'
+    else
+      ashSQL := 'SELECT'
+              + ' hr_unit_code'
+              + ', hr_unit_name '
+              + 'FROM hr_work_unit '
+              + 'WHERE hr_o_codelist REGEXP "' + userCode + '" '
+              + 'AND hr_use_yn = "Y"';
+  end;
+  {else if (codeId = 'unit_code') and (userCode = '') then // 근무조
+  begin
+      ashSQL := 'SELECT'
+              + ' hr_unit_code'
+              + ', hr_unit_name '
+              + 'FROM hr_work_unit';
+  end
+  else if (codeId = 'unit_code') and (Length(userCode) = 2) then
+  begin
+      ashSQL := 'SELECT'
+              + ' hr_unit_code'
+              + ', hr_unit_name '
+              + 'FROM hr_work_unit '
+              + 'WHERE hr_o_code = "' + userCode + '" ';
+  end
+  else if (codeId = 'unit_code') and (Length(userCode) = 6) then
+  begin
+      ashSQL := 'SELECT'
+              + ' hr_unit_code'
+              + ', hr_unit_name '
+              + 'FROM hr_work_unit '
+              + 'WHERE hr_o_code = "' + Copy(userCode,1,2) + '" '
+              + 'AND hr_b_code = "' + Copy(userCode,4,3) + '"';
+  end;
+  }
+
+  ashStr := MySQL_Assign(db, dsNm, AshSQL, Form1.vtTemp);
+  try
+    StrToInt(ashStr);
+  except
+    if mpst_code = '0579033000' then
+    begin
+      ShowMessage(ashStr);
+    end;
+  end;
+
+  if (cbNm is TComboBox) then
+  begin
+    with TComboBox(cbNm)do
+    begin
+      Clear;
+
+      if cbFirTxt = 'A' then Items.Add('전체')
+      else if cbFirTxt = 'S' then Items.Add('선택하세요');
+
+      if Form1.vtTemp.RecordCount < 1 then
+      begin
+        Clear;
+        items.Add(MSG_ERR_CD1); // 조회 권한이 없습니다
+      end;
+
+      while not Form1.vtTemp.Eof do
+      begin
+        if cbFirTxt = 'C' then // 코드
+          ashStr := Form1.vtTemp.Fields[0].AsString
+        else if cbFirTxt = 'M' then // 코드명
+          ashStr := Form1.vtTemp.Fields[1].AsString
+        else // 코드 + ' ' + 코드명
+          ashStr := Form1.vtTemp.Fields[0].AsString + ' ' + Form1.vtTemp.Fields[1].AsString;
+
+        Items.Add(ashStr);
+        ashStr := '';
+        Form1.vtTemp.Next;
+      end;
+      ItemIndex := 0;
+    end;
+  end
+  else if (cbNm is TCheckListBox) then
+  begin
+    with TCheckListBox(cbNm)do
+    begin
+      Clear;
+
+      if cbFirTxt = 'A' then Items.Add('전체');
+
+      if Form1.vtTemp.RecordCount < 1 then
+      begin
+        Clear;
+        items.Add(MSG_ERR_CD1); // 조회 권한이 없습니다
+        ItemEnabled[0] := False;
+      end;
+
+      while not Form1.vtTemp.Eof do
+      begin
+        ashStr := Form1.vtTemp.Fields[0].AsString + ' ' + Form1.vtTemp.Fields[1].AsString;
+        Items.Add(ashStr);
+        ashStr := '';
+        Form1.vtTemp.Next;
+      end;
+      ItemIndex := 0;
+    end;
+  end;
+end;
+
+// 체크리스트박스 전체 선택, 해제
+procedure setCklAll(cklNm:TCheckListBox);
+var i, chkCnt: Integer;
+begin
+  chkCnt := 0;
+  
+  if cklNm.ItemIndex = 0 then
+  begin
+    if cklNm.Checked[0] = True then // 전체선택
+    begin
+      for i := 1 to cklNm.Items.Count - 1 do
+      begin
+
+        cklNm.Checked[i] := True;
+      end;
+    end
+    else if cklNm.Checked[0] = False then // 전체해제
+    begin
+      for i := 1 to cklNm.Items.Count - 1 do
+      begin
+        cklNm.Checked[i] := False;
+      end;
+    end;
+  end
+  else
+  begin
+    cklNm.Checked[0] := False;
+  end;
+
+  for i := 0 to cklNm.Items.Count - 1 do
+  begin
+    if cklNm.Checked[i] then chkCnt := chkCnt + 1;
+  end;
+  if chkCnt = cklNm.Items.Count - 1 then
+    cklNm.Checked[0] := True;
+end;
+
+// 체크리스트박스 초기화
+procedure setCklInit(cklNm:TCheckListBox);
+var
+  i: Integer;
+begin
+  for i := 0 to cklNm.Items.Count - 1 do
+  begin
+    cklNm.Checked[i] := False;
+  end;
+  cklNm.ClearSelection;
+end;
+
+// 체크리스트박스 checked count
+function getCklChkCnt(cklNm:TCheckListBox): Integer;
+var
+  chkCnt, i: Integer;
+begin
+  chkCnt := 0;
+  for i := 0 to cklNm.Items.Count - 1 do
+  begin
+    if cklNm.Checked[i] then chkCnt := chkCnt + 1;
+  end;
+  Result := chkCnt;
+end;
+
+// 체크리스트박스 index 0를 제외한 checked count
+function getNCklChkCnt(cklNm:TCheckListBox): Integer;
+var
+  chkCnt, i: Integer;
+begin
+  chkCnt := 0;
+  for i := 1 to cklNm.Items.Count - 1 do
+  begin
+    if cklNm.Checked[i] then chkCnt := chkCnt + 1;
+  end;
+  Result := chkCnt;
+end;
+
+// 체크리스트박스 체크 선택 코드를 콤마(,)로 구분한 문자열(IN 조건) 리턴
+// 1:코드, 2:코드값, 3:사업장일 경우 [법인코드-사업장코드] 이므로 한번 더 처리한다.
+// 4:법인리스트 REGEXP 조건 - 다중선택 사업장 체크리스트박스 [법인코드-사업장코드]에서 법인코드만..
+function getCklCondStr(cklNm:TCheckListBox; ab:Integer = 1): String;
+var
+  i: Integer;
+  cond: String;
+begin
+  cond := '';
+
+  for i := 1 to cklNm.Items.Count - 1 do // index 0(전체선택) 제외
+  begin
+    if cklNm.Checked[i] then
+    begin
+      if (ab = 1) then
+      begin
+        if cond = '' then
+          cond := '"' + subStr(cklNm.Items[i], 1) + '"'
+        else
+          cond :=  cond + ',"' + subStr(cklNm.Items[i], 1) + '"';
+      end
+      else if (ab = 2) then
+      begin
+        if cond = '' then
+          cond := subStr(cklNm.Items[i], 2)
+        else
+          cond :=  cond + ', ' + subStr(cklNm.Items[i], 2);
+      end
+      else if (ab = 3) then
+      begin
+        if cond = '' then
+          cond := '"' + subStr(subStr(cklNm.Items[i], 1), 2, '-') + '"'
+        else
+          cond := cond + ',"' + subStr(subStr(cklNm.Items[i], 1), 2, '-') + '"';
+      end
+      else if (ab = 4) then
+      begin
+        if cond = '' then
+          cond := subStr(subStr(cklNm.Items[i], 1), 1, '-')
+        else
+          cond := cond + '|' + subStr(subStr(cklNm.Items[i], 1), 1, '-');
+      end;
+    end;
+  end;
+  Result := cond;
+end;
+
+// ERP단체코드와 HR법인코드 매칭
+{
+  oCode     : ERP단체코드 또는 HR법인코드
+  oCodeAb   : 구분 : [ERP] ERP단체코드, [HR] HR법인코드
+  return    : 매칭코드
+}
+function getMatchOCode(oCode, oCodeAb:String): String;
+var
+  ashSql: String;
+begin
+  if oCodeAb = 'ERP' then
+  begin
+    ashSql := 'SELECT hr_o_code AS oCode FROM hr_company WHERE erp_o_code = "' + oCode + '" AND hr_o_use_yn = "Y"';
+  end
+  else if oCodeAb = 'HR' then
+  begin
+    ashSql := 'SELECT erp_o_code AS oCode FROM hr_company WHERE hr_o_code = "' + oCode + '" AND hr_o_use_yn = "Y"';
+  end;
+
+  AshSQL := MySQL_Assign(Form1.db_coophr, Form1.qrysql, AshSQL, Form1.vtTemp);
+  try
+    StrToInt(AshSQL);
+  except
+    if mpst_code = '0579033000' then
+    begin
+      ShowMessage(ashSql);
+    end;
+  end;
+
+  if Form1.vtTemp.FieldByName('oCode').AsString <> '' then
+    Result := Form1.vtTemp.FieldByName('oCode').AsString
+  else
+  begin
+    //ShowMessage(MSG_ERR_MATCH_OCODE);
+    Exit;
+  end;
+end;
+
+// 사용자 프로그램의 단체, 프로그램 등록, 수정, 인쇄 권한 조회
+procedure inquirySustaff();
+var
+  AshSQL: String;
+begin
+  AshSQL := 'SELECT hr_obp_ab, hr_obp_code, hr_insert, hr_edit, hr_print, hr_salary_ab '
+          + 'FROM hr_sustaff_log '
+          + 'WHERE hr_pro_name = "' + ExtractFileName(Application.ExeName) + '" '
+          + 'AND hr_m_code = "' + mpst_code + '" '
+          + 'AND p_ab = "A"'; // A 사용
+
+  AshSQL := MySQL_Assign(Form1.db_coophr, Form1.qrysql, AshSQL, Form1.vtSuStaff);
+  try
+    StrToInt(AshSQL);
+  except
+    if mpst_code = '0579033000' then
+    begin
+      ShowMessage(AshSQL);
+    end;
+  end;
+
+  // 권한있는 법인의 소속 사업장 조회
+  AshSQL := 'SELECT hr_o_code, hr_b_code '
+          + 'FROM hr_branch '
+          + 'WHERE hr_o_code IN (SELECT hr_obp_code '
+          +                     'FROM hr_sustaff_log '
+          +                     'WHERE hr_m_code = "' + mpst_code + '" '
+          +                     'AND hr_pro_name = "' + ExtractFileName(Application.ExeName) + '" '
+          +                     'AND hr_obp_ab = "O" '
+          +                     'AND p_ab = "A")';
+
+  AshSQL := MySQL_Assign(Form1.db_coophr, Form1.qrysql, AshSQL, Form1.vtTemp);
+  try
+    StrToInt(AshSQL);
+  except
+    if mpst_code = '0579033000' then
+    begin
+      ShowMessage(AshSQL);
+    end;
+  end;
+
+  // 권한 virtual table에 법인 소속 사업장 append
+  if Form1.vtTemp.RecordCount > 0 then
+  begin
+    Form1.vtTemp.First;
+    while not Form1.vtTemp.Eof do
+    begin
+      if Form1.vtSuStaff.Locate('hr_obp_ab;hr_obp_code', VarArrayOf(['O', Form1.vtTemp.FieldByName('hr_o_code').AsString]), []) then
+      begin
+        Form1.vtSuStaff.AppendRecord(['B', Form1.vtTemp.FieldByName('hr_b_code').AsString,
+            Form1.vtSuStaff.FieldByName('hr_insert').AsString, Form1.vtSuStaff.FieldByName('hr_edit').AsString,
+            Form1.vtSuStaff.FieldByName('hr_print').AsString, Form1.vtSuStaff.FieldByName('hr_salary_ab').AsString]);
+      end;
+      Form1.vtTemp.Next;
+    end;
+  end;
+end;
+
+// 사용자 프로그램의 법인별 사업장별 부서별 등록, 수정, 출력 권한
+// obpAb: 'O'-법인, 'B'-사업장, 'P'-부서
+// 2014.03.12 법인별 급여정보허용여부 권한 추가 hr_salary_ab(A:확인불가 B:허용)
+procedure setGroupRightYn(obpAb: String = ''; obpCode: String = '');
+begin
+  insertYn := 'N'; editYn := 'N'; printYn := 'N'; salaryAb := 'A';
+
+  // 단체전체권한 - hr_obp_ab:A 또는 hr_obp_code:9999
+  // 법인별 사업장별 부서별 권한 세분화가 필요없는 프로그램 또는 수퍼단체권한 사용자
+  //if Form1.vtSuStaff.FieldByName('hr_obp_ab').AsString = 'A' then
+  if Form1.vtSuStaff.FieldByName('hr_obp_code').AsString = '9999' then
+  begin
+    insertYn := Form1.vtSuStaff.FieldByName('hr_insert').AsString;
+    editYn   := Form1.vtSuStaff.FieldByName('hr_edit').AsString;
+    printYn  := Form1.vtSuStaff.FieldByName('hr_print').AsString;
+  end
+  else
+  begin
+    if obpAb = '' then // FormCreate 시 (법인, 사업장, 부서 미선택)
+    begin
+      if Form1.vtSuStaff.Locate('hr_insert', 'N', []) then insertYn := 'N' else insertYn := 'Y';
+      if Form1.vtSuStaff.Locate('hr_edit', 'N', []) then editYn := 'N' else editYn := 'Y';
+      if Form1.vtSuStaff.Locate('hr_print', 'N', []) then printYn := 'N' else printYn  := 'Y';
+      if Form1.vtSuStaff.Locate('hr_salary_ab', 'A', []) then salaryAb := 'A' else salaryAb  := 'B';
+    end
+    // 법인, 사업장, 부서 컴포넌트 초기화 시
+    else if (obpAb <> '') and (obpCode = '') then
+    begin
+      if Form1.vtSuStaff.Locate('hr_obp_ab;hr_insert', VarArrayOf([obpAb, 'N']), []) then insertYn := 'N' else insertYn := 'Y';
+      if Form1.vtSuStaff.Locate('hr_obp_ab;hr_edit', VarArrayOf([obpAb, 'N']), []) then editYn := 'N' else editYn := 'Y';
+      if Form1.vtSuStaff.Locate('hr_obp_ab;hr_print', VarArrayOf([obpAb, 'N']), []) then printYn := 'N' else printYn  := 'Y';
+      if Form1.vtSuStaff.Locate('hr_obp_ab;hr_salary_ab', VarArrayOf([obpAb, 'A']), []) then salaryAb := 'A' else salaryAb := 'B';
+    end
+    // 법인, 사업장, 부서 선택 시
+    else
+    begin
+      if Form1.vtSuStaff.Locate('hr_obp_ab;hr_obp_code', VarArrayOf([obpAb, obpCode]), []) then
+      begin
+        insertYn := Form1.vtSuStaff.FieldByName('hr_insert').AsString;
+        editYn   := Form1.vtSuStaff.FieldByName('hr_edit').AsString;
+        printYn  := Form1.vtSuStaff.FieldByName('hr_print').AsString;
+        salaryAb := Form1.vtSuStaff.FieldByName('hr_salary_ab').AsString;
+      end;
+    end;
+  end;
+end;
+
+// 급여정보허용 권한에 따른 Display Format 리턴
+function getSalaryFormat(salaryAb: String):String;
+begin
+  if salaryAb = 'A' then // 급여정보 확인불가
+    Result := '*******'
+  else if salaryAb = 'B' then // 허용
+    Result := '#,##0';
+end;
+
+// 사용자권한 법인, 부서 조회
+{ vtSustaff : vtCompany, vtPost
+  obpAb     : 법인, 사업장, 부서코드 구분(O:법인, B:사업장, P:부서)
+  mpstCode  : 사용자사원번호
+  return    : 권한있는 법인(또는 부서)코드를 콤마(,)로 구분한 문자열  예) 코드1, 코드2, 코드3
+}
+function getStrObpCode(obpAb: String):String;
+var
+  obpCode, strSustaff: String;
+begin
+  // 사용자 법인, 부서 권한 조회
+  {AshSQL := 'SELECT hr_obp_code '
+          + 'FROM hr_sustaff_log '
+          + 'WHERE hr_m_code = "' + mpst_code + '" '
+          + 'AND hr_pro_name = "' + ExtractFileName(Application.ExeName) + '" '
+          + 'AND hr_obp_ab = "' + obpAb + '" '
+          + 'AND p_ab = "A"';
+
+  AshSQL := MySQL_Assign(Form1.db_coophr, dsNm, AshSQL, vtSustaff);
+
+  try
+    StrToInt(AshSQL);
+  except
+    if mpst_code = '0579033000' then
+    begin
+      ShowMessage(AshSQL);
+    end;
+  end;
+  }
+
+  strSustaff := '';
+
+  Form1.vtSuStaff.First;
+
+  while not Form1.vtSuStaff.Eof do
+  begin
+    obpCode := '';
+    if Form1.vtSuStaff.FieldByName('hr_obp_ab').AsString = obpAb then
+      obpCode := Form1.vtSuStaff.FieldByName('hr_obp_code').AsString;
+
+    if isEmpty(obpCode) then
+    begin
+      if strSustaff = '' then obpCode := '"' + obpCode + '"'
+      else obpCode :=  ',"' + obpCode + '"';
+
+      strSustaff := strSustaff + obpCode;
+    end;
+    Form1.vtSuStaff.Next;
+  end;
+
+  if strSustaff = '' then
+    Result := '""'
+  else
+    Result := strSustaff;
+end;
+
+// 해당부서의 권한 유무 확인
+function getStaffYn(vt: TVirtualTable; ab: String; code: String):String;
+var
+  staffYn: String; // 권한유무
+begin
+  staffYn := 'N';
+
+  // 권한 확인
+  vt.First;
+  while not vt.Eof do
+  begin
+    if (vt.FieldByName(ab).AsString = code) then staffYn := 'Y';
+    vt.Next;
+  end;
+  Result := staffYn;
+end;
+
+// 부서 조회 - 부서 테이블 4차서버 연결로 전체부서 조회 추가
+procedure selectPost(db: TZConnection; vtPost: TVirtualTable);
+var
+  AshSQL: String;
+begin
+  AshSQL := 'SELECT post_code, post_name FROM admin_post';
+
+  AshSQL := MySQL_Assign(db, Form1.qrysql, AshSQL, vtPost);
+
+  try
+    StrToInt(AshSQL);
+  except
+    if mpst_code = '0579033000' then
+    begin
+      ShowMessage(AshSQL);
+    end;
+  end;
+end;
+
+// 공통코드를 콤보박스에 세팅
+{ dsNm      : TZQuery명
+  vtTemp    : TVirtualTable명
+  codeId    : 공통코드ID
+  cbFirTxt  : 콤보박스 index 0의 text (A:전체, S:선택하세요, N:없음)
+  cbNm      : 콤보박스명, 체크리스트박스명
+}
+procedure setCbCommCode(dsNm: TZQuery; vtTemp: TVirtualTable; codeId, cbFirTxt: String; cbNm: TComboBox); overload;
+var
+  AshSQL, str: String;
+begin
+  cbNm.Clear;
+
+  if cbFirTxt = 'A' then cbNm.Items.Add('전체')
+  else if cbFirTxt = 'S' then cbNm.Items.Add('선택하세요');
+
+  // CUG조합매장,
+  if (codeId = 'hr_direct_store_ab') or (codeId = 'hr_johap_store_ab') then
+  begin
+    AshSQL  := 'SELECT hr_code_value, hr_code_value_name '
+            + 'FROM hr_common_code_value '
+            + 'WHERE hr_code_id = "' + codeId
+            + '" AND hr_use_yn <> "N" '
+            + 'ORDER BY hr_code_value_name';
+  end
+  else
+  begin
+
+    AshSQL  := 'SELECT hr_code_value, hr_code_value_name '
+            + 'FROM hr_common_code_value '
+            + 'WHERE hr_code_id = "' + codeId
+            + '" AND hr_use_yn <> "N" '
+            + 'ORDER BY hr_sort_seq ASC, hr_code_value ASC';
+  end;
+
+  AshSQL := MySQL_Assign(Form1.db_coophr, dsNm, AshSQL, vtTemp);
+
+  try
+    StrToInt(AshSQL);
+  except
+    if mpst_code = '0579033000' then
+    begin
+      ShowMessage(AshSQL);
+    end;
+  end;
+
+  vtTemp.First;
+  while not vtTemp.Eof do
+  begin
+    str := vtTemp.Fields[0].AsString + ' ' + vtTemp.Fields[1].AsString;
+    cbNm.Items.Add(str);
+    str := '';
+    vtTemp.Next;
+  end;
+
+  cbNm.ItemIndex := 0;
+end;
+
+procedure setCbCommCode(dsNm: TZQuery; vtTemp: TVirtualTable; codeId, cbFirTxt: String; cbNm: TCheckListBox); overload;
+var
+  AshSQL, str: String;
+begin
+  cbNm.Clear;
+
+  if cbFirTxt = 'A' then cbNm.Items.Add('전체')
+  else if cbFirTxt = 'S' then cbNm.Items.Add('선택하세요');
+
+  AshSQL  := 'SELECT hr_code_value, hr_code_value_name '
+          + 'FROM hr_common_code_value '
+          + 'WHERE hr_code_id = "' + codeId
+          + '" AND hr_use_yn <> "N" '
+          + 'ORDER BY hr_sort_seq ASC';
+
+  AshSQL := MySQL_Assign(Form1.db_coophr, dsNm, AshSQL, vtTemp);
+
+  try
+    StrToInt(AshSQL);
+  except
+    if mpst_code = '0579033000' then
+    begin
+      ShowMessage(AshSQL);
+    end;
+  end;
+
+  vtTemp.First;
+  while not vtTemp.Eof do
+  begin
+    str := vtTemp.Fields[0].AsString + ' ' + vtTemp.Fields[1].AsString;
+    cbNm.Items.Add(str);
+    str := '';
+    vtTemp.Next;
+  end;
+
+  cbNm.ItemIndex := 0;
+end;
+
+// 공통코드 콤보박스에서 선택한 콤보text에서 코드값만 가져오기
+function getCommCodeVal(cb: TComboBox): String; overload;
+begin
+  if ((Pos('선택', cb.Items[0]) > 0) or (cb.Items[0] = '전체')) and (cb.ItemIndex = 0) then
+  begin
+      result := '';
+  end
+  else
+  begin
+      result := subStr(cb.Text, 1, ' ');
+  end;
+end;
+
+function getCommCodeVal(ckl: TCheckListBox): String; overload;
+begin
+  if ((Pos('선택', ckl.Items[0]) > 0) or (ckl.Items[0] = '전체')) and (ckl.ItemIndex = 0) then
+  begin
+      result := '';
+  end
+  else
+  begin
+      result := subStr(ckl.Items.Strings[ckl.ItemIndex], 1, ' ');
+  end;
+end;
+
+function getCodeValNm(ckl: TCheckListBox): String;
+begin
+  if ((Pos('선택', ckl.Items[0]) > 0) or (ckl.Items[0] = '전체')) and (ckl.ItemIndex = 0) then
+  begin
+      result := '';
+  end
+  else
+  begin
+      result := subStr(ckl.Items.Strings[ckl.ItemIndex], 2, ' ');
+  end;
+end;
+
+// 공통코드 콤보박스에서 value 매칭 code 가져오기
+function getMatchValueCode(value: String; cbNm: TComboBox):String;
+var
+  i: Integer;
+  code: String;
+begin
+  code := '';
+  if ((Pos('선택', cbNm.Items[0]) > 0) or (cbNm.Items[0] = '전체')) and (cbNm.ItemIndex = 0) then
+  begin
+      code := '';
+  end
+  else
+  begin
+    for i := 1 to cbNm.Items.Count - 1 do
+    begin
+      if subStr(cbNm.Items.Strings[i], 2, ' ') = value then
+      begin
+        code := subStr(cbNm.Items.Strings[i], 1, ' ');
+        Break;
+      end;
+    end;
+  end;
+  Result := code;
+end;
+
+// 공통코드 콤보박스에서 code 매칭 index 가져오기
+function getMatchCodeIdx(code: String; cbNm: TComboBox):Integer; overload;
+var
+  i, idx: Integer;
+begin
+  idx := 0;
+  for i := 0 to cbNm.Items.Count - 1 do
+  begin
+    if subStr(cbNm.Items.Strings[i], 1, ' ') = code then
+    begin
+      idx := cbNm.Items.IndexOf(cbNm.Items.Strings[i]);
+      Break;
+    end;
+  end;
+  Result := idx;
+end;
+
+function getMatchCodeIdx(code: String; cbNm: TwDataCombo):Integer; overload;
+var
+  i, idx: Integer;
+begin
+  idx := 0;
+  cbNm.ListSource.DataSet.First;
+  while not cbNm.ListSource.DataSet.Eof do
+  begin
+    if cbNm.ListSource.DataSet.FieldByName('g_code').AsString = code then
+    begin
+      idx := cbNm.ListSource.DataSet.RecNo;
+      Break;
+    end;
+    cbNm.ListSource.DataSet.Next;
+  end;
+  Result := idx;
+end;
+
+function getMatchCodeIdx(code: String; ckl: TCheckListBox):Integer; overload;
+var
+  i, idx: Integer;
+begin
+  idx := 0;
+  for i := 0 to ckl.Items.Count - 1 do
+  begin
+    if subStr(ckl.Items.Strings[i], 1, ' ') = code then
+    begin
+      idx := ckl.Items.IndexOf(ckl.Items.Strings[i]);
+      Break;
+    end;
+  end;
+  Result := idx;
+end;
+
+// 콤보박스에서 code 매칭 value 가져오기
+function getMatchCodeVal(code: String; cbNm: TComboBox):String;
+var
+  i: Integer;
+  val: String;
+begin
+  val := '';
+  for i := 0 to cbNm.Items.Count - 1 do
+  begin
+    if (splitCd(cbNm.Items.Strings[i], 1) = Trim(code)) then
+    begin
+      val := splitCd(cbNm.Items.Strings[i], 2);
+      Break;
+    end;
+  end;
+  Result := val;
+end;
+
+// 공통코드 콤보박스에서 value 매칭 index 가져오기
+function getMatchValueIdx(val: String; cbNm: TComboBox):Integer;
+var
+  i, idx: Integer;
+begin
+  idx := 0;
+  for i := 0 to cbNm.Items.Count - 1 do
+  begin
+    if splitCd(cbNm.Items.Strings[i], 2, ' ') = val then
+    begin
+      idx := cbNm.Items.IndexOf(cbNm.Items.Strings[i]);
+    end;
+  end;
+  Result := idx;
+end;
+
+// true, false -> Y, N으로 치환
+function getYn(bool: Boolean): String;
+begin
+  if bool = true then
+    result := 'Y'
+  else if bool = false then
+    result := 'N';
+end;
+
+// Y, N -> true, false 로 치환
+function getBool(yn: String): Boolean;
+begin
+  if yn = 'Y' then
+    result := true
+  else
+    result := false;
+end;
+
+// 삭제확인창 메세지
+function confirmDelMsg(msg: String = ''): Integer;
+begin
+  if msg = '' then
+    msg := '삭제 후에는 복원할 수 없습니다.' + #13#10 + '삭제하시려면 저장(F4)버튼을 눌러주세요';
+  result := MessageBox(0, PChar(msg), '삭제확인', MB_OKCANCEL);
+end;
+
+// 날짜 초기화 : 1900-01-01
+function initDt(): TDate;
+begin
+  result := StrToDate('1900/01/01');
+end;
+
+// dateTimePicker 데이터 null일 때 date 지우기
+procedure setDt(dt: TDateTimePicker; strDate: String);
+begin
+  if strDate = '' then
+    dt.Format := ' '
+  else
+    dt.Date := StrToDate(strDate);
+end;
+
+// 날짜 문자열 dateTime 타입으로 변환
+function convtDateType(strDate: String): TDate;
+var
+  y, m, d: String;
+begin
+  strDate := StringReplace(strDate, '-', '',[rfReplaceAll, rfIgnoreCase]);
+  strDate := StringReplace(strDate, '/', '',[rfReplaceAll, rfIgnoreCase]);
+
+  if Length(strDate) = 8 then
+  begin
+    y := Copy(strDate, 1, 4);
+    m := Copy(strDate, 5, 2);
+    d := Copy(strDate, 7, 2);
+
+    Result := StrToDate(y + DateSeparator + m + DateSeparator + d);
+  end
+  else
+    Result := StrToDate('1900/01/01');
+end;
+
+// 입력날짜 유효성 체크
+// validDate
+function isDate(str: String; msgYn: Boolean): Boolean;
+var
+  strDate: String;
+  y, m, d: Integer;
+begin
+  strDate := StringReplace(str, '-', '',[rfReplaceAll, rfIgnoreCase]);
+  strDate := StringReplace(str, '/', '',[rfReplaceAll, rfIgnoreCase]);
+
+  if Length(strDate) = 8 then
+  begin
+    y := StrToInt(Copy(strDate, 1, 4));
+    m := StrToInt(Copy(strDate, 5, 2));
+    d := StrToInt(Copy(strDate, 7, 2));
+
+    // 윤년 확인
+    if (y mod 4 = 0) and (y mod 100 > 0) or (y mod 400 = 0) then
+      days[1] := 29;
+
+    if (m > 0) and (m < 13) and (d > 0) and (d <= days[m - 1]) then
+        Result := true
+    else
+    begin
+      if msgYn then ShowMessage(MSG_ERR_VAL_DATE1);
+      Result := false;
+    end;
+  end
+  else
+  begin
+    if msgYn then ShowMessage(MSG_ERR_VAL_DATE1);
+    Result := false;
+  end;
+end;
+// validDateTime
+
+// From~To 기간 체크
+function validPeriod(fromDt, toDt: TDateTime): Boolean; overload;
+begin
+  if CompareDateTime(fromDt, toDt) = 1 then // A=B(0), A>B(1), A<B(-1)
+  begin
+    ShowMessage(MSG_ERR_VAL_DATE2);
+    Result := False;
+  end
+  else
+    Result := True;
+end;
+
+// 입력날짜 From~To 기간 체크
+function validPeriod(fromDt, toDt: TDateTimePicker): Boolean; overload;
+begin
+  if (CompareDate(fromDt.Date, toDt.Date) = 1) then // A=B(0), A>B(1), A<B(-1)
+  begin
+    ShowMessage(MSG_ERR_VAL_DATE2);
+    fromDt.SetFocus;
+    Result := False;
+  end
+  else
+    Result := True;
+end;
+
+// 전화번호 유효성 확인
+{ telNo : 하이픈(-) 포함한 전화번호 }
+function chkTelNo(telNo: String): Boolean;
+var
+  delimiter, localNo, middleNo, lastNo: string;
+  i, val, cnt: Integer;
+begin
+  Result := True;
+  delimiter := '-';
+
+  // 하이픈(-) 개수 2 확인
+  i := 1; cnt := 0;
+  while i <= Length(telNo) do
+  begin
+    if Copy(telNo,i,1) = delimiter then
+      inc(cnt);
+    inc(i);
+  end;
+  if cnt <> 2 then Result := False;
+
+  // 하이픈을 제외하고 숫자만 입력 확인
+  // 070 지역번호  TryStrToInt 함수에서 False 반환한다. 왜???
+  //if not TryStrToInt(StringReplace(telNo, '-', '', [rfReplaceAll]), val) then Result := False;
+
+  localNo   := subStr(telNo, 1, delimiter);
+  middleNo  := subStr(telNo, 2, delimiter);
+  lastNo    := subStr(telNo, 3, delimiter);
+
+  // 지역번호 첫자리 0 확인
+  if Copy(telNo, 1, 1) <> '0' then Result := False;
+  // 지역번호 길이확인
+  if not Length(localNo) in [2,3] then Result := False;
+  // 중간자리번호 길이확인
+  if not Length(middleNo) in [3,4] then Result := False;
+  // 끝자리번호 길이확인
+  if Length(lastNo) <> 4 then Result := False;
+end;
+
+// 주민번호로 생년월일 구하기
+function getBirthdayByIdNo(id: String): TDate;
+var
+  y, m, d, k: Integer;
+begin
+  k := StrToInt(Copy(id, 7, 1));
+  y := 1900;
+
+  if (k = 1) or (k = 2) or (k = 5) or (k = 6) then
+    y := StrToInt('19' + Copy(id, 1, 2))
+  else if (k = 3) or (k = 4) or (k = 7) or (k = 8) then
+    y := StrToInt('20' + Copy(id, 1, 2));
+
+  m := StrToInt(Copy(id, 3, 2));
+  d := StrToInt(Copy(id, 5, 2));
+
+  result := EncodeDate(y, m, d);
+end;
+
+// 화면모드별 조건 컴포넌트 속성 변경
+procedure setCondEnable(const obj: TComponent; mode: Integer; e: Integer);
+begin
+  if mode = 0 then mode := 1
+  else if mode = 2 then mode := 0;
+
+  setObjEnable(obj, mode, e);
+end;
+
+// 화면모드별 입력 컴포넌트 속성 변경
+{ obj : 컴포넌트명
+  mode: 화면모드(0:보기, 1:등록, 2: 수정, 3:삭제)
+  e   : 필수값여부(0:비필수, 1:필수, 2:비활성(수정모드에서))
+}
+procedure setObjEnable(const obj: TComponent; mode: Integer; e: Integer);
+var
+  esseColr, nesseColr, inactColr: TColor;
+begin
+  esseColr  := $00D2FEFF; // 필수
+  nesseColr := $00FFFFFF; // 비필수
+  inactColr := $00FCFCFC; // 비활성 $00EEEEEE
+  case mode of
+    0, 3: // 보기, 삭제
+    begin
+      if (obj is TEdit) or (obj is TMaskEdit) or (obj is TwNumEdit) then
+      begin
+        TEdit(obj).Enabled  := false;
+        TEdit(obj).Color    := inactColr ;
+      end
+
+      else if (obj is TComboBox) or (obj is TCheckListBox) then
+      begin
+        TComboBox(obj).Enabled := false;
+        TComboBox(obj).Color   := inactColr;
+      end
+
+      else if (obj is TCheckBox) or (obj is TRadioButton) or (obj is TButton) or (obj is TSpeedButton) then
+      begin
+        TWinControl(obj).Enabled := false;
+      end
+
+      else if obj is TDateTimePicker then
+      begin
+        TDateTimePicker(obj).Enabled := false;
+        TDateTimePicker(obj).Color   := inactColr;
+      end
+
+      else if obj is TDBGrid then
+      begin
+        TDBGrid(obj).Enabled := false;
+        TDBGrid(obj).Color   := inactColr;
+      end
+
+      else if obj is TMemo then
+      begin
+        TMemo(obj).ReadOnly := True;
+        TMemo(obj).Color    := inactColr;
+      end;
+    end;
+
+    1: // 등록
+    begin
+      if (obj is TEdit) or (obj is TMaskEdit) or (obj is TwNumEdit) then
+      begin
+        TEdit(obj).Enabled := true;
+
+        if e = 0 then
+          TEdit(obj).Color := nesseColr
+        else
+          TEdit(obj).Color := esseColr;
+      end
+
+      else if (obj is TComboBox) or (obj is TCheckListBox) then
+      begin
+        TComboBox(obj).Enabled := true;
+
+        if e = 0 then
+          TComboBox(obj).Color := nesseColr
+        else
+          TComboBox(obj).Color := esseColr;
+      end
+
+      else if obj is TCheckBox then
+      begin
+        TCheckBox(obj).Enabled := true;
+        //TCheckBox(obj).Checked := false;
+      end
+
+      else if (obj is TRadioButton) or (obj is TButton) or (obj is TSpeedButton)then
+      begin
+        TWinControl(obj).Enabled := true;
+      end
+
+      else if obj is TDateTimePicker then
+      begin
+        TDateTimePicker(obj).Enabled := true;
+        if e = 0 then
+          TDateTimePicker(obj).Color := nesseColr
+        else
+          TDateTimePicker(obj).Color := esseColr;
+      end
+
+      else if obj is TMemo then
+      begin
+        TMemo(obj).ReadOnly := False;
+        if e = 0 then
+          TMemo(obj).Color := nesseColr
+        else
+          TMemo(obj).Color := esseColr;
+      end
+
+      else if obj is TDBGrid then
+      begin
+        TDBGrid(obj).Enabled := true;
+        TDBGrid(obj).Color := nesseColr;
+      end;
+    end;
+
+    2: // 수정
+    begin
+      if (obj is TEdit) or (obj is TMaskEdit) or (obj is TwNumEdit) then
+      begin
+        if e = 0 then
+        begin
+          TEdit(obj).Enabled  := true;
+          TEdit(obj).Color    := nesseColr;
+        end
+        else if e = 1 then
+        begin
+          TEdit(obj).Enabled  := true;
+          TEdit(obj).Color    := esseColr;
+        end
+        else if e = 2 then
+        begin
+          TEdit(obj).Enabled  := false;
+          TEdit(obj).Color    := inactColr;
+        end;
+      end
+
+      else if (obj is TComboBox) or (obj is TCheckListBox) then
+      begin
+        if e = 0 then
+        begin
+          TComboBox(obj).Enabled  := true;
+          TComboBox(obj).Color    := nesseColr;
+        end
+        else if e = 1 then
+        begin
+          TComboBox(obj).Enabled  := true;
+          TComboBox(obj).Color    := esseColr;
+        end
+        else if e = 2 then
+        begin
+          TComboBox(obj).Enabled  := false;
+          TComboBox(obj).Color    := inactColr;
+        end;
+      end
+
+      else if (obj is TCheckBox) or (obj is TRadioButton) or (obj is TButton) or (obj is TSpeedButton)then
+      begin
+        TWinControl(obj).Enabled := true;
+      end
+
+      else if obj is TDateTimePicker then
+      begin
+        if e = 0 then
+        begin
+          TDateTimePicker(obj).Enabled  := true;
+          TDateTimePicker(obj).Color    := nesseColr;
+        end
+        else if e = 1 then
+        begin
+          TDateTimePicker(obj).Enabled  := true;
+          TDateTimePicker(obj).Color    := esseColr;
+        end
+        else if e = 2 then
+        begin
+          TDateTimePicker(obj).Enabled  := false;
+          TDateTimePicker(obj).Color    := inactColr;
+        end;
+      end
+
+      else if obj is TMemo then
+      begin
+        TMemo(obj).ReadOnly := False;
+        if e = 0 then
+          TMemo(obj).Color := nesseColr
+        else
+          TMemo(obj).Color := esseColr;
+      end
+
+      else if obj is TDBGrid then
+      begin
+        TDBGrid(obj).Enabled := true;
+      end;
+    end;
+  end;
+end;
+
+// DBGrid 타이틀 2줄로 쓰기
+procedure drawMultiLineTitleGrid(Sender: TObject; const Rect: TRect; Column: TColumn);
+var
+  al: Integer;
+  R: TRect;
+begin
+  al := 0;
+  R := Rect;
+
+  with TADBGrid(Sender) do
+  begin
+    RowHeights[0]      := (DefaultRowHeight * 2) - 5;
+    Canvas.Brush.Color := $00BF8030;
+    Canvas.Font.Color  := $00FFFFFF;
+
+    InflateRect(R, -1, -1); // 사각형의 가로와 세로의 크기 조절
+    R.Top    := 1;
+    R.Bottom := RowHeights[0] - 1;
+    Canvas.FillRect(R);
+
+    case Column.Title.Alignment of
+      taCenter:       al := DT_CENTER;
+      taLeftJustify:  al := DT_LEFT;
+      taRightJustify: al := DT_RIGHT;
+    end;
+
+    // 타이틀폰트 굴림, 10
+    if Length(Column.Title.Caption) * 7 > Column.Width then
+      al := al 	or DT_WORDBREAK or DT_END_ELLIPSIS
+    else
+      al := al  or DT_SINGLELINE or DT_VCENTER;
+
+    DrawText(Canvas.Handle, PChar(Column.Title.Caption), -1, R, al);
+  end;
+end;
+
+
+end.

@@ -1,0 +1,269 @@
+object fmSearchTaxOffice: TfmSearchTaxOffice
+  Left = 235
+  Top = 139
+  BorderStyle = bsSingle
+  Caption = #49464#47924#49436#44160#49353
+  ClientHeight = 562
+  ClientWidth = 634
+  Color = clBtnFace
+  Font.Charset = ANSI_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -13
+  Font.Name = #44404#47548
+  Font.Style = []
+  FormStyle = fsStayOnTop
+  KeyPreview = True
+  OldCreateOrder = False
+  Position = poMainFormCenter
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
+  PixelsPerInch = 96
+  TextHeight = 13
+  object ToolBar1: TToolBar
+    Left = 0
+    Top = 0
+    Width = 634
+    Height = 29
+    ButtonHeight = 21
+    ButtonWidth = 57
+    Caption = 'ToolBar1'
+    EdgeBorders = [ebTop, ebBottom]
+    ShowCaptions = True
+    TabOrder = 0
+    object btnInquiry: TToolButton
+      Left = 0
+      Top = 2
+      Caption = #51312#54924'(F9)'
+      ImageIndex = 0
+      OnClick = btnInquiryClick
+    end
+    object btnClose: TToolButton
+      Left = 57
+      Top = 2
+      Caption = #51333#47308
+      ImageIndex = 2
+      OnClick = btnCloseClick
+    end
+  end
+  object gb_cd_save: TGroupBox
+    Left = 1
+    Top = 32
+    Width = 632
+    Height = 53
+    TabOrder = 1
+    object Image1: TImage
+      Left = 11
+      Top = 26
+      Width = 6
+      Height = 6
+      Picture.Data = {
+        07544269746D6170AE000000424DAE0000000000000036000000280000000600
+        000006000000010018000000000078000000C40E0000C40E0000000000000000
+        0000FBEED1F2C25BF2C25BF2C25BF2C25BFCF2DC0000DAA92EDAA92EDAA92EDA
+        A92EDAA92EDCAE3A0000CD9C16CD9C16CD9C16CD9C16CD9C16D0A2240000D7A5
+        32D7A532D7A532D7A532D7A532D9AA3E0000DAA93DDAA93DDAA93DDAA93DDAA9
+        3DDCAE480000F3E1BEDEAE4EDEAE4EDEAE4EDEAE4EF6E9CF0000}
+    end
+    object Image30: TImage
+      Left = 303
+      Top = 26
+      Width = 6
+      Height = 6
+      Picture.Data = {
+        07544269746D6170AE000000424DAE0000000000000036000000280000000600
+        000006000000010018000000000078000000C40E0000C40E0000000000000000
+        0000FBEED1F2C25BF2C25BF2C25BF2C25BFCF2DC0000DAA92EDAA92EDAA92EDA
+        A92EDAA92EDCAE3A0000CD9C16CD9C16CD9C16CD9C16CD9C16D0A2240000D7A5
+        32D7A532D7A532D7A532D7A532D9AA3E0000DAA93DDAA93DDAA93DDAA93DDAA9
+        3DDCAE480000F3E1BEDEAE4EDEAE4EDEAE4EDEAE4EF6E9CF0000}
+    end
+    object Label1: TLabel
+      Left = 313
+      Top = 23
+      Width = 52
+      Height = 13
+      Caption = #44288#54624#44396#50669
+    end
+    object Label2: TLabel
+      Left = 21
+      Top = 23
+      Width = 101
+      Height = 13
+      Caption = #52397#49436#47749'('#52397#49436#53076#46300')'
+    end
+    object edtTaxOffice: TEdit
+      Left = 130
+      Top = 19
+      Width = 161
+      Height = 21
+      Color = clWhite
+      ImeName = 'Microsoft IME 2010'
+      TabOrder = 0
+      OnKeyPress = edtTaxOfficeKeyPress
+    end
+    object edtZone: TEdit
+      Left = 370
+      Top = 19
+      Width = 251
+      Height = 21
+      Color = clWhite
+      ImeName = 'Microsoft IME 2010'
+      TabOrder = 1
+      OnKeyPress = edtZoneKeyPress
+    end
+  end
+  object grdTaxOffice: TDBGrid
+    Left = 1
+    Top = 89
+    Width = 632
+    Height = 453
+    BiDiMode = bdLeftToRight
+    DataSource = dsTaxOffice
+    Font.Charset = HANGEUL_CHARSET
+    Font.Color = clBlack
+    Font.Height = -13
+    Font.Name = #44404#47548
+    Font.Style = []
+    ImeName = 'Microsoft IME 2010'
+    Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgConfirmDelete, dgCancelOnExit]
+    ParentBiDiMode = False
+    ParentFont = False
+    TabOrder = 2
+    TitleFont.Charset = ANSI_CHARSET
+    TitleFont.Color = clWhite
+    TitleFont.Height = 13
+    TitleFont.Name = #44404#47548
+    TitleFont.Style = []
+    OnDrawColumnCell = grdTaxOfficeDrawColumnCell
+    OnDblClick = grdTaxOfficeDblClick
+    Columns = <
+      item
+        Alignment = taCenter
+        Color = 16774118
+        Expanded = False
+        FieldName = 'hr_tax_office_code'
+        Title.Alignment = taCenter
+        Title.Caption = #52397#49436#53076#46300
+        Title.Color = 12550192
+        Width = 55
+        Visible = True
+      end
+      item
+        Color = 16774118
+        Expanded = False
+        FieldName = 'hr_tax_office_name'
+        Title.Alignment = taCenter
+        Title.Caption = #52397#49436#47749
+        Title.Color = 12550192
+        Width = 85
+        Visible = True
+      end
+      item
+        Alignment = taCenter
+        Color = 16774118
+        Expanded = False
+        FieldName = 'hr_acct_no'
+        Title.Alignment = taCenter
+        Title.Caption = #44228#51340#48264#54840
+        Title.Color = 12550192
+        Width = 60
+        Visible = True
+      end
+      item
+        Color = 16774118
+        Expanded = False
+        FieldName = 'hr_zone'
+        Title.Alignment = taCenter
+        Title.Caption = #44288#54624#44396#50669
+        Title.Color = 12550192
+        Width = 400
+        Visible = True
+      end
+      item
+        Alignment = taCenter
+        Color = 16774118
+        Expanded = False
+        FieldName = 'hr_zip'
+        Title.Alignment = taCenter
+        Title.Caption = #50864#54200#48264#54840
+        Title.Color = 12550192
+        Width = 65
+        Visible = True
+      end
+      item
+        Color = 16774118
+        Expanded = False
+        FieldName = 'hr_addr1'
+        Title.Alignment = taCenter
+        Title.Caption = #51452#49548
+        Title.Color = 12550192
+        Width = 250
+        Visible = True
+      end
+      item
+        Color = 16774118
+        Expanded = False
+        FieldName = 'hr_tel_no'
+        Title.Alignment = taCenter
+        Title.Caption = #51204#54868#48264#54840
+        Title.Color = 12550192
+        Width = 100
+        Visible = True
+      end
+      item
+        Color = 16774118
+        Expanded = False
+        FieldName = 'hr_fax_no'
+        Title.Alignment = taCenter
+        Title.Caption = #54057#49828#48264#54840
+        Title.Color = 12550192
+        Width = 100
+        Visible = True
+      end
+      item
+        Alignment = taCenter
+        Color = 16774118
+        Expanded = False
+        FieldName = 'mpst_code'
+        Title.Alignment = taCenter
+        Title.Caption = #52572#51333#48320#44221#49324#50896
+        Title.Color = 12550192
+        Width = 80
+        Visible = True
+      end
+      item
+        Alignment = taCenter
+        Color = 16774118
+        Expanded = False
+        FieldName = 'p_day'
+        Title.Alignment = taCenter
+        Title.Caption = #52572#51333#48320#44221#51068#49884
+        Title.Color = 12550192
+        Width = 155
+        Visible = True
+      end>
+  end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Top = 543
+    Width = 634
+    Height = 19
+    Panels = <
+      item
+        Text = 'F1-'#46020#50880#47568', F9-'#51312#54924
+        Width = 50
+      end>
+    SimplePanel = False
+  end
+  object dsTaxOffice: TDataSource
+    DataSet = vtTaxOffice
+    Left = 95
+    Top = 466
+  end
+  object vtTaxOffice: TVirtualTable
+    Left = 30
+    Top = 466
+    Data = {02000000000000000000}
+  end
+end

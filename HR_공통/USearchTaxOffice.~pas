@@ -1,0 +1,227 @@
+unit USearchTaxOffice;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, ComCtrls, Grids, DBGrids, StdCtrls, ExtCtrls, ToolWin, DB,
+  MemDS, VirtualTable;
+
+type
+  TfmSearchTaxOffice = class(TForm)
+    ToolBar1: TToolBar;
+    btnInquiry: TToolButton;
+    btnClose: TToolButton;
+    gb_cd_save: TGroupBox;
+    Image1: TImage;
+    Image30: TImage;
+    Label1: TLabel;
+    Label2: TLabel;
+    edtTaxOffice: TEdit;
+    grdTaxOffice: TDBGrid;
+    StatusBar1: TStatusBar;
+    edtZone: TEdit;
+    dsTaxOffice: TDataSource;
+    vtTaxOffice: TVirtualTable;
+    procedure FormCreate(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure btnInquiryClick(Sender: TObject);
+    procedure btnCloseClick(Sender: TObject);
+    procedure grdTaxOfficeDblClick(Sender: TObject);
+    procedure grdTaxOfficeDrawColumnCell(Sender: TObject;
+      const Rect: TRect; DataCol: Integer; Column: TColumn;
+      State: TGridDrawState);
+    procedure edtTaxOfficeKeyPress(Sender: TObject; var Key: Char);
+    procedure edtZoneKeyPress(Sender: TObject; var Key: Char);
+  private
+    ashSql, ashStr: String;
+  public
+    procedure MouseWheelHandler(var Message: TMessage); override;
+  end;
+
+var
+  fmSearchTaxOffice: TfmSearchTaxOffice;
+  arrTaxOfficeInfo: array[0..7] of String;
+
+implementation
+
+uses coop_utils, coophr_utils, coop_sql_updel, Unit1;
+
+{$R *.dfm}
+
+procedure TfmSearchTaxOffice.MouseWheelHandler(var Message: TMessage);
+begin
+  if Message.msg = WM_MOUSEWHEEL then
+  begin
+    if (ActiveControl is TDBgrid) then
+    begin
+      if Message.wParam > 0 then
+      begin
+        keybd_event(VK_UP, VK_UP, 0, 0);
+      end
+      else if Message.wParam < 0 then
+      begin
+        keybd_event(VK_DOWN, VK_DOWN, 0, 0);
+      end;
+    end;
+  end;
+end;
+
+// FormCreate
+procedure TfmSearchTaxOffice.FormCreate(Sender: TObject);
+begin
+  //
+end;
+
+// 조회
+procedure TfmSearchTaxOffice.btnInquiryClick(Sender: TObject);
+begin
+  ashSql := 'SELECT'
+          + ' hr_tax_office_code'
+	        + ', hr_group_ab'
+	        + ', CASE hr_group_ab WHEN 0 THEN CONCAT(hr_tax_office_code, "000")'
+	          + ' ELSE CONCAT(hr_group_ab, hr_tax_office_code) END AS orderNo'
+	        + ', hr_tax_office_name'
+          + ', hr_acct_no'
+          + ', hr_zone'
+          + ', hr_zip'
+          + ', hr_addr1'
+          + ', hr_tel_no'
+          + ', hr_fax_no'
+          + ', mpst_code'
+          + ', p_day'
+          + ' FROM hr_tax_office'
+          + ' WHERE 1=1'
+          + ' AND (hr_tax_office_code LIKE "%' + Trim(edtTaxOffice.Text) + '%"'
+          + ' OR hr_tax_office_name LIKE "%' + Trim(edtTaxOffice.Text) + '%")'
+          + ' AND hr_zone LIKE "%' + Trim(edtZone.Text) + '%"'
+          + ' ORDER BY orderNo';
+
+  ashStr := MySQL_Assign(Form1.db_coophr, Form1.qrysql, ashSql, vtTaxOffice);
+  try
+    StrToInt(ashStr);
+  except
+    ShowMessage('오류가 발생하였습니다.[' + ashStr + '](ERR:112)');
+    Exit;
+  end;
+
+  if vtTaxOffice.RecordCount = 1 then // 검색결과가 하나이면
+  begin
+    grdTaxOfficeDblClick(grdTaxOffice);
+  end
+  else if vtTaxOffice.RecordCount < 1 then
+  begin
+    //Application.Title := '세무서검색';
+    ShowMessage('검색결과가 없습니다.');
+  end;
+end;
+
+// 그리드 더블클릭 시 모달리스 창으로 사원정보 전달
+procedure TfmSearchTaxOffice.grdTaxOfficeDblClick(Sender: TObject);
+begin
+  if vtTaxOffice.RecordCount > 0 then
+  begin
+    {
+    [0] 청서코드
+    [1] 청서명
+    [2] 계좌번호
+    [3] 관할구역
+    [4] 우편번호
+    [5] 주소
+    [6] 전화번호
+    [7] 팩스번호
+    }
+    arrTaxOfficeInfo[0] := vtTaxOffice.FieldByName('hr_tax_office_code').AsString;
+    arrTaxOfficeInfo[1] := vtTaxOffice.FieldByName('hr_tax_office_name').AsString;
+    arrTaxOfficeInfo[2] := vtTaxOffice.FieldByName('hr_acct_no').AsString;
+    arrTaxOfficeInfo[3] := vtTaxOffice.FieldByName('hr_zone').AsString;
+    arrTaxOfficeInfo[4] := vtTaxOffice.FieldByName('hr_zip').AsString;
+    arrTaxOfficeInfo[5] := vtTaxOffice.FieldByName('hr_addr1').AsString;
+    arrTaxOfficeInfo[6] := vtTaxOffice.FieldByName('hr_tel_no').AsString;
+    arrTaxOfficeInfo[7] := vtTaxOffice.FieldByName('hr_fax_no').AsString;
+
+    ModalResult := mrOk;
+  end;
+end;
+
+// 종료
+procedure TfmSearchTaxOffice.btnCloseClick(Sender: TObject);
+begin
+  Close;
+end;
+
+// 폼에서 키 다운 이벤트 발생 시
+procedure TfmSearchTaxOffice.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if (Shift = [ssAlt]) or (Shift = [ssCtrl]) then
+    Exit;
+
+  case Key of
+    VK_RIGHT: // VK_RIGHT 오른쪽커서 이동키
+      begin
+        SelectNext(ActiveControl, False, True);
+        key := 0;
+      end;
+    VK_RETURN:
+      begin
+        SelectNext(ActiveControl, True, True);
+        key := 0;
+      end;
+    VK_F1:
+      begin
+        ShowMessage('F1');
+        Key := 0;
+      end;
+    VK_F9:
+      begin
+        if btnInquiry.Enabled then
+          btnInquiryClick(btnInquiry);
+        Key := 0;
+      end;
+    VK_ESCAPE: // ESC 키
+      begin
+        if btnClose.Enabled then
+          btnCloseClick(btnClose);
+        Key := 0;
+      end;
+  end;
+end;
+
+// FormClose
+procedure TfmSearchTaxOffice.FormClose(Sender: TObject;
+  var Action: TCloseAction);
+begin
+  vtTaxOffice.Close;
+  Form1.db_coophr.Disconnect;
+  Action := caFree;
+end;
+
+procedure TfmSearchTaxOffice.grdTaxOfficeDrawColumnCell(Sender: TObject;
+  const Rect: TRect; DataCol: Integer; Column: TColumn;
+  State: TGridDrawState);
+begin
+  // 국세청 row 색상바꾸기
+  if vtTaxOffice.FieldByName('hr_group_ab').AsString = '0' then
+    grdTaxOffice.Canvas.Brush.Color := clMoneyGreen;
+  grdTaxOffice.DefaultDrawColumnCell(Rect, DataCol, Column, State);
+end;
+
+// 조회조건 청서명 edit에서 엔터 키로 조회
+procedure TfmSearchTaxOffice.edtTaxOfficeKeyPress(Sender: TObject;
+  var Key: Char);
+begin
+  if Key = #13 then
+    btnInquiryClick(btnInquiry);
+end;
+
+// 조회조건 관할구역 edit에서 엔터 키로 조회
+procedure TfmSearchTaxOffice.edtZoneKeyPress(Sender: TObject;
+  var Key: Char);
+begin
+  if Key = #13 then
+    btnInquiryClick(btnInquiry);
+end; 
+end.

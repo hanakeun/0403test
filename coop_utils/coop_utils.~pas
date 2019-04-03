@@ -1,0 +1,491 @@
+unit coop_utils;
+
+interface
+
+uses
+  SysUtils, Classes, Windows,
+  DB, ZAbstractRODataset, ZAbstractDataset, ZDataset, ZConnection,
+  Messages, Variants, Graphics, Controls, Forms, Dialogs, StdCtrls,
+  VirtualTable;
+
+
+//문자열에서 공백제거.
+function DelBlank(pfStr: String): String;
+
+//에러메세지 처리.
+procedure Error(const Msg: String);
+
+//초기화면 위치설정.
+procedure Set_MainPosition(app_main: TForm);
+
+//주민등록번호 체크.
+function CheckJumin(str: String): Boolean;
+
+//주민등록번호 끝자리 구하기.
+function MakeJuminCRC(str: String): Char;
+
+//테이블 Open 및 Execute
+function SQLToHistory(my_sql: String): String;
+function MySQL_OpenExecute(my_dataset: TZQuery; my_sql: String): String;
+
+//ItemIndex <-> DataValue('A','B','C', ...)
+function ReturnABC(pfint: Integer): String;
+function ReturnItemIndex(pfstr: String): Integer;
+function GetComboText(pfstr: String; pfcombo: TComboBox): String;
+
+//파일관련.
+function ExtractFileNameNoExt(const fileName: String): String;
+procedure StrToSaveToFile(var s: String; const fileName : String); overload;
+procedure StrToSaveToFile(s1: PChar; len: Integer; const fileName : String ); overload;
+
+//암호화관련.
+function Encrypt(const S: String; Key: Word): String;
+function Decrypt(const S: String; Key: Word): String;
+// Ver.5 마이그레이션 위해 Virtual table field 길이 정리
+function MySQL_OpenAssign(my_dataset: TZQuery; my_sql: String; my_virtual: TVirtualTable): String;
+function DataSet_ReAssign(my_dataset: TDataSet; my_virtual: TVirtualTable): String;
+//2008/10/17/금 대리님사용 함수 추가
+function DataSet_FieldsAssign(my_dataset: TDataSEt; my_virtual: TVirtualTable; my_keyfields: String): String;
+
+var
+  mpst_code, mpst_name, PromptStr: String;
+
+implementation
+
+uses Unit1;
+
+Const
+  C1 = 74102;
+  C2 = 12337;
+  HexaChar: Packed array[0..15] of char =
+                                        ('0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F');
+
+function DelBlank(pfStr: String): String;
+begin
+ while Pos(' ',pfStr) <> 0 do
+   System.Delete(pfStr,Pos(' ',pfStr),1);
+
+  Result := pfStr;
+end;
+
+procedure Set_MainPosition(app_main: TForm);
+begin
+ if (Screen.Width - app_main.Width) >= 0 then
+  begin
+    app_main.Left := (Screen.Width - app_main.Width) div 2;
+    app_main.Top  := 0;
+  end
+ else
+   app_main.Position := poScreenCenter;
+end;
+
+function CheckJumin(str:String):Boolean;
+const
+  n: Packed Array [1..12] of Integer =
+                                     ( 2, 3, 4, 5, 6, 7, 8, 9, 2, 3, 4, 5 );
+var
+  i, j, k: Integer;
+begin
+  str := Trim(str);
+ if Length(str) <> 13 then
+  begin
+    Result := False;
+    Exit;
+  end;
+
+ try
+   j := 0;
+  for i := 1 to 12 do
+    j:= j + StrToInt(str[i])*n[i];
+   k := 11-(j Mod 11);
+  if k = 11 then k := 1;
+  if k = 10 then k := 0;
+
+   Result := Char(k+48) = str[13];
+ except
+   Result := False;
+ end;
+end;
+
+//주민등록번호 끝자리 구하기.
+function MakeJuminCRC(str:String):Char;
+const
+  n: Packed Array [1..12] of Integer =
+    ( 2, 3, 4, 5, 6, 7, 8, 9, 2, 3, 4, 5 );
+var
+  i,j,k: Integer;
+begin
+  str := Trim(str);
+ if Length(str) <> 12 then
+  begin
+    Result := '*';
+    Exit;
+  end;
+
+ try
+   j := 0;
+  for i := 1 to 12 do
+    j := j + StrToInt(str[i])*n[i];
+   k := 11-(j Mod 11);
+  if k = 11 then k := 1;
+  if k = 10 then k := 0;
+
+   Result := Char(k+48);
+ except
+   Result := '*';
+ end;
+end;
+
+function SQLToHistory(my_sql: String): String;
+var
+  AshStr: String;
+  AshPosInt: Integer;
+begin
+  my_sql := Trim(my_sql);
+  AshStr := UpperCase(my_sql);
+ while Pos('NOW()',AshStr) <> 0 do
+ begin
+   AshPosInt:= Pos('NOW()',AshStr);
+   System.Delete(my_sql,AshPosInt,5);
+   System.Insert('"'+FormatDateTime('yyyy-mm-dd hh:mm:ss',Now)+'"',my_sql,AshPosInt);
+   AshStr := UpperCase(my_sql);
+ end;
+
+ while Pos('"',my_sql) <> 0 do
+  begin
+    AshPosInt := Pos('"',my_sql);
+    System.Delete(my_sql,AshPosInt,1);
+    System.Insert('∬', my_sql,AshPosInt);
+  end;
+  my_sql := mpst_name+'['+mpst_code+']-('+FormatDateTime('yyyy-mm-dd hh:mm:ss', Now)+')'+#13#10+my_sql+#13#10;
+  Result := my_sql;
+end;
+
+function MySQL_OpenExecute(my_dataset: TZQuery; my_sql: String): String;
+var
+  AshClauseStr: String;
+begin
+  my_sql      := Trim(my_sql);
+  AshClauseStr:= UpperCase(Copy(my_sql,1,6));
+  my_dataset.Close;
+  my_dataset.SQL.Clear;
+  my_dataset.SQL.Add(my_sql);
+ if AshClauseStr = 'SELECT' then
+ begin
+  try
+   try
+     my_dataset.Open;
+   except
+    try
+      my_dataset.Open;
+    except
+      my_dataset.Open;
+    end;
+   end;
+  except
+   On E: Exception do
+   begin
+    if (PromptStr='Z') then
+      InputQuery(my_dataset.Name, 'Open_Error', my_sql);
+     Result := E.Message;
+     Exit;
+   end;
+  end;
+ end
+ else if ((AshClauseStr='INSERT') or (AshClauseStr='UPDATE') or (AshClauseStr='DELETE')) then
+ begin
+  try
+    my_dataset.ExecSQL;
+  except
+   On E: Exception do
+   begin
+    if (PromptStr='Z') then
+      InputQuery(my_dataset.Name, 'Open_Error', my_sql);
+     Result := E.Message;
+     Exit;
+   end;
+  end;
+ end
+ else
+ begin
+  if (PromptStr='Z') then
+    InputQuery(my_dataset.Name, 'Open_Error', my_sql);
+   Result := 'Error(3): '+my_sql;
+   Exit;
+ end;
+  Result := '';
+end;
+
+function GetComboText(pfstr: String; pfcombo: TComboBox): String;
+var
+  AshStr: String;
+  AshInt: Integer;
+begin
+  AshStr := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  AshInt := Pos(pfstr,AshStr) - 1;
+  AshStr := pfcombo.Items.Strings[AshInt];
+ if AshStr = '' then
+   Result := '검토'
+ else
+   Result := AshStr;
+end;
+
+//Data Value -> ComboBox.ItemIndex
+function ReturnItemIndex(pfstr: String): Integer;
+var
+  AshStr: String;
+begin
+  AshStr := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  Result := Pos(pfstr,AshStr) - 1;
+end;
+
+//ComboBox.ItemIndex -> Data Value
+function ReturnABC(pfint: Integer): String;
+var
+  AshInt: Integer;
+  AshStr: String;
+begin
+  AshStr := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  AshInt := pfint + 1;
+  Result := Copy(AshStr,AshInt,1);
+end;
+
+procedure Error(const Msg: string);
+begin
+  raise Exception.Create(Msg);
+end;
+
+function ExtractFileNameNoExt( const FileName : string ): string;
+var
+  I,J : integer;
+begin
+  Result := '';
+  I := LastDelimiter('.', FileName);
+  J := LastDelimiter('\:', FileName);
+  if I < J then
+    exit
+  else
+    if I > 0 then
+      Result := Copy(FileName,J+1,I-J-1)
+    else
+      Result := Copy(FileName, J+1, MaxInt);
+end;
+
+procedure StrToSaveToFile( var S : string; const FileName : string );
+begin
+  with TFileStream.Create( FileName, fmCreate) do
+  begin
+    Write( Pointer(S)^, Length(S) );
+    Free;
+  end;
+end;
+
+procedure StrToSaveToFile( S1 : PChar; Len : integer; const FileName : string );
+begin
+  with TFileStream.Create( FileName, fmCreate) do begin
+    Write( S1^, Len );
+    Free;
+  end;
+end;
+
+//Byte로 구성된 데이터를 HexaDecimal 문자열로 변환
+function ValueToHex(Const S:String): String;
+var
+  i: integer;
+begin
+  SetLength(Result, Length(S)*2);
+  for i := 0 to Length(S) - 1 do
+  begin
+    Result[(i*2)+1] := HexaChar[integer(S[i+1]) shr 4];
+    Result[(i*2)+2] := HexaChar[integer(S[i+1]) and $0f];
+  end;
+end;
+
+//HexaDecimal로 구성된 문자열을 Byte 데이터로 변환
+function HexToValue(Const S: String): String;
+var
+  i: integer;
+begin
+  SetLength(Result, Length(S) div 2);
+  for i := 0 to (Length(S) div 2) - 1 do
+  begin
+    Result[i+1] := Char(StrToInt('$'+Copy(S,(i*2)+1,2)));
+  end;
+end;
+
+//암호걸기
+function Encrypt(const S: String; Key: Word): String;
+var
+  i: Byte;
+  FirstResult: String;
+begin
+  SetLength(FirstResult, Length(S)); //문자열의 크기를 설정
+  for i := 1 to Length(S) do
+  begin
+    FirstResult[i] := Char(Byte(S[i]) xor (Key shr 8));
+    Key := (Byte(FirstResult[i]) + Key) * C1 + C2;
+  end;
+  Result := ValueToHex(FirstResult);
+end;
+
+//암호풀기
+function Decrypt(const S: String; Key: Word): String;
+var
+  i: Byte;
+  FirstResult: String;
+begin
+  FirstResult := HexToValue(S);
+  SetLength( Result, Length(FirstResult));
+  for i := 1 to Length(FirstResult) do
+  begin
+    Result[i] := Char(Byte(FirstResult[i]) xor (Key shr 8));
+    Key := (Byte(FirstResult[i]) + Key) * C1 + C2;
+  end;
+end;
+
+function MySQL_OpenAssign(my_dataset: TZQuery; my_sql: String; my_virtual: TVirtualTable): String;
+var
+  i,AshSize: Integer;
+  AshSQL
+  ,AshClauseStr,AshVersion: String;
+begin
+  my_sql      := Trim(my_sql);
+  AshClauseStr:= UpperCase(Copy(my_sql,1,6));
+ if AshClauseStr = 'SELECT' then
+ begin
+   AshSQL := 'Select Version()';
+   MySQL_OpenExecute(my_dataset,AshSQL);
+  try
+    AshVersion := Copy(my_dataset.Fields.Fields[0].AsString,1,1);
+  except
+    AshVersion := '4';
+  end;
+
+   my_dataset.Close;
+   my_dataset.SQL.Clear;
+   my_dataset.SQL.Add(my_sql);
+  try
+   try
+     my_dataset.Open;
+   except
+    try
+      my_dataset.Open;
+    except
+      my_dataset.Open;
+    end;
+   end;
+    my_virtual.Clear;
+    my_virtual.Assign(my_dataset);
+    my_dataset.Close;
+    my_virtual.Open;
+
+   if AshVersion<>'4' then
+   begin
+    for i:=0 to my_virtual.Fields.Count-1 do
+    begin
+     if my_virtual.Fields.Fields[i].DataType = ftString then
+     begin
+      if my_virtual.Fields.Fields[i].DataSize = my_virtual.Fields.Fields[i].DisplayWidth then
+        AshSize := Round((my_virtual.Fields.Fields[i].DataSize)/3)
+      else
+        AshSize := Round((my_virtual.Fields.Fields[i].DataSize-1)/3);
+       my_virtual.Fields.Fields[i].DisplayWidth := AshSize;
+     end;
+    end;
+   end;
+  except
+   On E: Exception do
+   begin
+    if (PromptStr='Z') then
+      InputQuery(my_dataset.Name, 'Open_Error', my_sql);
+     Result := E.Message;
+     Exit;
+   end;
+  end;
+   Result := '';
+ end
+ else
+ begin
+   Result := 'No Select Query';
+ end;
+end;
+
+function DataSet_ReAssign(my_dataset: TDataSet; my_virtual: TVirtualTable): String;
+var
+i: Integer;
+begin
+ try
+ my_virtual.Clear;
+ my_virtual.Assign(my_dataset);
+ my_virtual.Open;
+
+ for i:=0 to my_dataset.Fields.Count-1 do
+  begin
+   if my_dataset.Fields.Fields[i].DataType = ftString then
+     my_virtual.Fields.Fields[i].DisplayWidth := my_dataset.Fields.Fields[i].DisplayWidth;
+  end;
+ except
+  Result := 'Error!!!';
+  Exit;
+ end;
+ Result := '';
+end;
+
+//2008/10/17/금 대리님사용 함수 추가
+function DataSet_FieldsAssign(my_dataset: TDataSEt; my_virtual: TVirtualTable; my_keyfields: String): String;
+var
+i: Integer;
+begin
+ try
+  if my_virtual.Fields.Count = 0 then
+   begin
+    for i:=0 to my_dataset.Fields.Count-1 do
+     begin
+      if ((my_dataset.Fields.Fields[i].DataType = ftString) or (my_dataset.Fields.Fields[i].DataType = ftFixedChar) or (my_dataset.Fields.Fields[i].DataType = ftWideString)) then
+        my_virtual.AddField(my_dataset.Fields.Fields[i].FieldName,my_dataset.Fields.Fields[i].DataType,my_dataset.Fields.Fields[i].DataSize,False)
+      else
+        my_virtual.AddField(my_dataset.Fields.Fields[i].FieldName,my_dataset.Fields.Fields[i].DataType,0,False);
+     end;
+   end;
+
+  my_dataset.First;
+  while Not my_dataset.Eof do
+   begin
+    if my_keyfields <> '.' then
+     begin
+      if my_virtual.Locate(my_keyfields,my_dataset.FieldByName(my_keyfields).AsString,[]) then
+       begin
+        my_virtual.Edit;
+         for i:=0 to my_dataset.Fields.Count-1 do
+          begin
+           if Pos(my_dataset.Fields.Fields[i].FieldName,'['+my_keyfields+']') = 0 then
+            my_virtual.Fields.Fields[i].AsVariant := my_dataset.Fields.Fields[i].AsVariant;
+          end;
+        my_virtual.Post;
+       end
+      else
+       begin
+        my_virtual.Append;
+         for i:=0 to my_dataset.Fields.Count-1 do
+          my_virtual.Fields.Fields[i].AsVariant := my_dataset.Fields.Fields[i].AsVariant;
+          my_virtual.Post;
+         end;
+       end
+      else
+       begin
+        my_virtual.Append;
+        for i:=0 to my_dataset.Fields.Count-1 do
+         my_virtual.Fields.Fields[i].AsVariant := my_dataset.Fields.Fields[i].AsVariant;
+         my_virtual.Post;
+       end;
+   my_dataset.Next;
+   end;
+ except
+  Result := 'Error!!!';
+  Exit;
+ end;
+ Result := '';
+
+end;
+
+end.
